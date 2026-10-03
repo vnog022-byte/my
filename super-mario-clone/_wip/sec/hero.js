@@ -146,7 +146,7 @@ ROWS.h_die1 = hsFrame({ head: HF, hx: 3, leg: HS_LEG.die, arms: [['side', 1, 8],
 ROWS.h_die2 = hsFrame({ head: HF, hx: 3, leg: HS_LEG.die, arms: [['dieV', 0, 1]] });
 for (const k in ROWS) if (k.startsWith('h_') && (ROWS[k].length !== 16 || ROWS[k].some(r => r.length !== 16))) throw new Error('tamanho errado ' + k);
 
-const HERO = { K: '#1c1828', C: '#20a08c', L: '#9cf0d8', M: '#127060', S: '#fcc8a0', T: '#fcc8a0', B: '#fcc8a0', E: '#1c1828',
+const HERO = { K: '#1c1828', C: '#20a08c', L: '#9cf0d8', M: '#127060', S: '#fcc8a0', T: '#e09870', B: '#fcc8a0', E: '#1c1828',
   P: '#c0385c', Q: '#8c2450', O: '#f8f0e0', N: '#f8f0e0' };
 PAL.hero = HERO;
 PAL.heroF = { ...HERO, C: '#e8401c', L: '#fcd860', M: '#981c10', P: '#fcf4e0', Q: '#c8b48c', O: '#fcd860', N: '#e8401c' };
