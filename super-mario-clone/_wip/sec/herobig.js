@@ -6,7 +6,7 @@
 /* tronco (sem bracos), linhas 7-17 */
 const HB_TORSO = [
   '...KCCLCCLCCK...',
-  '....KCLCCLCK....',
+  '....KCCCCCCK....',
   '....KCCCCCCK....',
   '....KCCCCCCK....',
   '....KCCCCCMK....',
@@ -119,3 +119,7 @@ const HB_CLIMB_F = ['......PPPP......', '......PPPP......', '......PPPP......', 
   '.......PPP......', '........PPP.....', '........PPP.....', '........OOOO....', '........OOOOO...', '........KKKKK...', '................'];
 ROWS.H_climb1 = HB_frame(HB_CLIMB_N, HB_CLIMB_F, HB_dark(HB_AL.down), HB_AR.grip);
 ROWS.H_climb2 = HB_frame(HB_CLIMB_N, HB_CLIMB_F, HB_dark(HB_AL.down), HB_AR.fwd1, 1);
+/* agachado (reserva: o jogo ainda nao usa): corpo 7 px abaixo, joelhos para fora */
+const HB_DUCK = ['...QQQQ.PPPP....', '..QQQ.....PPP...', '..QQ.......PP...', '..NNNN....OOOO..', '..NNNNN...OOOOO.', '..KKKKK...KKKKK.'];
+ROWS.H_duck = HB_frame(HB_DUCK, [], HB_AL.down, HB_AR.down, 7);
+ROWS.H_duck_t = HB_frame(HB_DUCK, [], HB_AL.down, HB_AR.throw, 7);

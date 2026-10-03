@@ -60,7 +60,7 @@ var SPEC = {
     .concat(['stand', 'skid', 'land'].concat(HERO_WALK_B).map(k => 'H_' + k + '_t')),
   groups: [
     { title: 'Locomocao (7x) — parado, orelha e ciclo de caminhada', scale: 7, items: ['stand', 'stand2'].concat(HERO_WALK_B).map(k => ['H_' + k, 'hero']) },
-    { title: 'Acoes (6x)', scale: 6, items: ['jump', 'fall', 'skid', 'land', 'climb1', 'climb2'].map(k => ['H_' + k, 'hero']) },
+    { title: 'Acoes (6x)', scale: 6, items: ['jump', 'fall', 'skid', 'land', 'duck', 'climb1', 'climb2'].map(k => ['H_' + k, 'hero']) },
     { title: 'Arremessando bola de fogo (paleta de fogo, 5x)', scale: 5, items: ['stand'].concat(HERO_WALK_B, ['jump', 'fall', 'skid', 'land']).map(k => ['H_' + k + '_t', 'heroF']) },
     { title: 'Paletas: normal, fogo e as 3 da estrela (4x)', scale: 4, items: ['hero', 'heroF', 'heroS1', 'heroS2', 'heroS3'].map(p => ['H_' + HERO_WALK_B[0], p]) },
     { title: 'Tamanho real 2x: parado, ciclo, acoes', scale: 2, items: ['stand'].concat(HERO_WALK_B, ['jump', 'fall', 'skid', 'land', 'climb1', 'climb2', 'stand_t']).map(k => ['H_' + k, 'hero']) },

@@ -1,49 +1,79 @@
 /* ---- Gosma (16x16, olhando para a esquerda; flip quando anda para a direita).
-   Paleta de 3 cores: K=contorno/pupila B=corpo L=claro (olho, pe, brilho).
+   Paleta NES de 3 cores: K=contorno/pupila ($0F) B=corpo ($13) L=claro ($34: olho, dente, brilho).
+   O corpo e gerado por mascara (blobMask): o contorno K sai sozinho de toda borda, 1 px, sem degrau duplo.
    Caminhada de perfil: 8 quadros, 1 a cada 4 ticks (= 2 px a 0,5 px/tick). O pe apoiado recua 2 px por
-   quadro (nao patina) enquanto o outro volta pelo ar; corpo desce 1 px nos quadros de contato (pes abertos). Pes ficam atras do corpo; pe perto=claro, pe longe=roxo. ---- */
-const BLOB_BODY = [
-  '.......K........',
-  '......KBKK......',
-  '....KKBBBBKK....',
-  '..KKBLLBBBBBKK..',
-  '.KBLLBBBBBBBBBK.',
-  'KBKKBBBBBKKBBBBK',
-  'KBLLKBBBKLLBBBBK',
-  'KBKKLBBBKKLBBBBK',
-  'KBKKLBBBKKLBBBBK',
-  'KBLLLBBBLLLBBBBK',
-  '.KBBBKKKKBBBBBK.',
-  '..KBBBLBBBBBBK..',
-  '...KKKKKKKKKK...'];
-const BLOB_NEAR = ['..KKK.', '.KLLLK', 'KLLLLK', 'KKKKKK'], BLOB_FAR = ['..KKK.', '.KBBBK', 'KBBBBK', 'KKKKKK'];
-const BLOB_PX = [1, 3, 5, 7, 8, 6, 4, 2], BLOB_LIFT = [0, 0, 0, 0, 1, 2, 2, 1];
-const blobWalk = (i, eyes) => {
-  const a = i % 8, b = (i + 4) % 8, bob = a % 4 === 0 ? 1 : 0;
+   quadro (nao patina) e o outro volta erguido 1 px. Pe perto = roxo com brilho, pe longe = escuro.
+   Squash/stretch: contato (pes abertos) largo e baixo, passagem alta e estreita; a ponta do topo atrasa
+   1 quadro (estica quando o corpo desce, encolhe quando sobe) e uma gotinha escorre pela traseira. ---- */
+const blobMask = (on, extra) => {
+  const g = Array.from({ length: 16 }, (_, y) => Array.from({ length: 16 }, (_, x) => on(x, y)));
+  const at = (x, y) => x >= 0 && y >= 0 && x < 16 && y < 16 && g[y][x];
+  return g.map((r, y) => r.map((v, x) => !v ? '.' : at(x - 1, y) && at(x + 1, y) && at(x, y - 1) && at(x, y + 1) ? 'B' : 'K').join(''));
+};
+/* formas: c=contato (15 larg x 10 alt), m=meio (14x10), p=passagem (13x11) */
+const BLOB_SHAPE = { c: { lx: 0, rx: 14, top: 4, bot: 13 }, m: { lx: 1, rx: 14, top: 3, bot: 12 }, p: { lx: 1, rx: 13, top: 2, bot: 12 } };
+const BLOB_CYCLE = ['c', 'm', 'p', 'm', 'c', 'm', 'p', 'm'];
+const BLOB_DRIP = [5, 6, 6, 7, 8, 9, 9, 10];
+const blobBody = (i, ko) => {
+  const s = BLOB_SHAPE[BLOB_CYCLE[i % 8]], prev = BLOB_SHAPE[BLOB_CYCLE[(i + 7) % 8]];
+  const tipLen = ko ? 2 : 2 + s.top - prev.top, tipX = 7, dripY = ko ? -9 : Math.min(BLOB_DRIP[i % 8] + s.top - 3, s.bot - 2);
+  return blobMask((x, y) => {
+    if (y >= s.top && y <= s.bot) {
+      const dy = y - s.top, ins = dy === 0 ? 4 : dy === 1 ? 2 : dy === 2 || y === s.bot ? 1 : 0;
+      if (x >= s.lx + ins && x <= s.rx - ins) return true;
+      return x === s.rx + 1 && (y === dripY || y === dripY + 1);           // gotinha na traseira
+    }
+    const k = s.top - y;                                                 // ponta: escada de 1 px
+    if (k < 1 || k > tipLen) return false;
+    if (k === 1 && tipLen > 1) return x >= tipX - 1 && x <= tipX + 1;
+    return x === tipX + (k >= 3 ? 1 : 0);
+  });
+};
+/* rosto (sobreposto a partir da linha top+2): sobrancelhas em V descendo para o centro, palpebra cortando
+   o olho na diagonal, pupilas para a frente, boca afastada da base com 2 presas */
+const BLOB_FACE = [
+  '...KK.....KK....',
+  '...LLKK.KKLL....',
+  '...KKL...KKL....',
+  '...LLL...LLL....',
+  '.....KKKK.......',
+  '.....L..L.......'];
+const BLOB_FACE_BLINK = [
+  BLOB_FACE[0],
+  '...BBKK.KKBB....',
+  '...KKKB.BKKK....',
+  '...BBB...BBB....',
+  BLOB_FACE[4], BLOB_FACE[5]];
+const BLOB_FACE_KO = [
+  '...K..K.K..K....',
+  '....KK...KK.....',
+  '....KK...KK.....',
+  '...K..K.K..K....',
+  '......KKK.......',
+  '......KLK.......'];
+const BLOB_NEAR = ['.KKK.', 'KLBBK', 'KBBBK', '.KKK.'], BLOB_FAR = ['.KKK.', 'KBKKK', 'KKKKK', '.KKK.'];
+const BLOB_PX = [2, 4, 6, 8, 9, 7, 5, 3], BLOB_LIFT = [0, 0, 0, 0, 1, 1, 1, 1];
+const blobWalk = (i, face) => {
+  const a = i % 8, b = (i + 4) % 8, s = BLOB_SHAPE[BLOB_CYCLE[a]];
   return compose(16, 16, [
     [BLOB_FAR, BLOB_PX[b], 12 - BLOB_LIFT[b]],
     [BLOB_NEAR, BLOB_PX[a], 12 - BLOB_LIFT[a]],
-    [eyes || BLOB_BODY, 0, bob]]);
+    [blobBody(a)],
+    [face, 0, s.top + 2],
+    [['LL'], s.lx + 3, s.top + 1]]);
 };
-const BLOB_BLINK = BLOB_BODY.map((r, y) => y === 6 || y === 7 ? 'KBBBBBBBBBBBBBBK' : y === 8 ? 'KBKKKBBBKKKBBBBK' : y === 9 ? 'KBBBBBBBBBBBBBBK' : r);
-for (let i = 0; i < 8; i++) { ROWS['blob_w' + i] = blobWalk(i); ROWS['blob_w' + i + '_b'] = blobWalk(i, BLOB_BLINK); }
+for (let i = 0; i < 8; i++) { ROWS['blob_w' + i] = blobWalk(i, BLOB_FACE); ROWS['blob_w' + i + '_b'] = blobWalk(i, BLOB_FACE_BLINK); }
 ROWS.blob_n = ROWS.blob_w0; ROWS.blob_sq = ROWS.blob_w2; ROWS.blob_st = ROWS.blob_w6;
 ROWS.blob_n_b = ROWS.blob_w0_b; ROWS.blob_sq_b = ROWS.blob_w2_b; ROWS.blob_st_b = ROWS.blob_w6_b;
-/* esmagada: achatada como uma poca, olhos espremidos e pezinhos abertos para os lados */
-ROWS.blob_flat = [
-  '................', '................', '................', '................', '................', '................',
-  '................', '................', '................', '................',
-  '.....KKKKKK.....',
-  '...KKBLLBBBKK...',
-  '.KKBLLBBBBBBBKK.',
-  'KBBBKBBBBBBKBBBK',
-  'KBBBBKKBBKKBBBBK',
-  'KLLKKKKKKKKKKLLK'];
-/* derrubada (casco/bloco/fogo): olhos em X e boca aberta, pes juntos — desenhada de pe e virada com vflip */
-const BLOB_KO_FACE = { 5: 'KBBBBBBBBBBBBBBK', 6: 'KBKLKBBBKLKBBBBK', 7: 'KBLKLBBBLKLBBBBK', 8: 'KBKLKBBBKLKBBBBK', 9: 'KBBBBBBBBBBBBBBK',
-  10: '.KBBBBKKBBBBBBK.', 11: '..KBBKLLKBBBBK..' };
-ROWS.blob_ko = compose(16, 16, [[BLOB_FAR, 10, 12], [BLOB_NEAR, 0, 12], [BLOB_BODY.map((r, y) => BLOB_KO_FACE[y] || r)]]);
-PAL.blob = { K: '#2c1040', B: '#a048d8', L: '#f8d8f8' };
+/* esmagada: poca fechada com contorno, olhos "> <" e respingos dos dois lados */
+ROWS.blob_flat = compose(16, 16, [
+  [blobMask((x, y) => (y === 11 && x >= 5 && x <= 10) || (y === 12 && x >= 3 && x <= 12) || (y === 13 && x >= 1 && x <= 14) || y >= 14
+    || ((y === 10 || y === 11) && (x <= 1 || x >= 14)))],
+  [['....K....K......', '.....K..K.......', '....K....K......'], 1, 12],
+  [['L', 'L'], 0, 10], [['LL'], 6, 12], [['L'], 15, 10]]);
+/* derrubada (casco/bloco/fogo): olhos em X cheio, boca aberta, pes juntos na base — virada com vflip */
+ROWS.blob_ko = compose(16, 16, [[BLOB_FAR, 8, 12], [BLOB_NEAR, 3, 12], [blobBody(1, true)], [BLOB_FACE_KO, 0, 5], [['LL'], 4, 4]]);
+PAL.blob = { K: '#000000', B: '#8000f0', L: '#fcc4fc' };
 const BLOB_WALK = ['blob_w0', 'blob_w1', 'blob_w2', 'blob_w3', 'blob_w4', 'blob_w5', 'blob_w6', 'blob_w7'], BLOB_STEP = 4;
 function blobSprite(e, tick) {
   if (e.state === 'squish') return { id: 'blob_flat', pal: 'blob' };
