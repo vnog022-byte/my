@@ -602,7 +602,7 @@ function hitBlock(tx, ty) {
     c.n--; if (c.n <= 0) { map[ty][tx] = 4; delete content[key]; }
   } else {
     let kind = c.k; if (kind === 'grow' && p.power > 0) kind = 'fire';
-    items.push({ type: kind, x: tx * T, y: ty * T, w: 16, h: 16, vx: 0, vy: 0, dir: 1, emerge: 16, started: false });
+    items.push({ type: kind, x: tx * T, y: ty * T, w: 16, h: 16, vx: 0, vy: 0, dir: 1, emerge: 16, top: ty * T, started: false });
     sfx.sprout(); map[ty][tx] = 4; delete content[key]; sparkle(tx * T + 8, ty * T - 2);
   }
 }
@@ -909,7 +909,8 @@ function drawPlayer() {
 function drawWorld() {
   ctx.fillStyle = '#5c94fc'; ctx.fillRect(0, 0, W, H);
   drawDecor(); drawCastle(); drawFlagPole();
-  for (const it of items) if (it.emerge > 0) drawItem(it);
+  /* item saindo do bloco: so a parte acima do topo do bloco em repouso aparece (nao vaza por baixo no bump) */
+  for (const it of items) if (it.emerge > 0) { ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, it.top); ctx.clip(); drawItem(it); ctx.restore(); }
   drawTiles();
   for (const c of coinPops) drawSpr(coinSprite(c.t), 'coin', c.x, c.y, false);
   for (const it of items) if (it.emerge <= 0) drawItem(it);

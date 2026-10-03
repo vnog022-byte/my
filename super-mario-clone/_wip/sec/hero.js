@@ -82,8 +82,7 @@ const LO = {
     '...PP...QQ......',
     '..OO....NN......',
     '.OOOO...NNNN....'],
-  land: [ // dy=2
-    '...KCCCCCCCCK...',
+  land: [ // dy=3: agachado, joelhos abertos
     '..SKCCCCCCCCKS..',
     '....KLLLLLLK....',
     '...KPPPPPPPPK...',
@@ -134,11 +133,12 @@ ROWS.h_w4 = small(HH, 2, LO.pB);
 ROWS.h_jump = small(HH, 2, LO.jump, 0, [ARM_UP_R]);
 ROWS.h_fall = small(HH, 2, LO.fall, 0, [ARM_UP_L, ARM_UP_R]);
 ROWS.h_skid = small(HH, 3, LO.skid);
-ROWS.h_land = small(HH, 2, LO.land, 2);
+ROWS.h_land = small(HH, 2, LO.land, 3);
 ROWS.h_climb1 = small(HH, 2, LO.climb1);
 ROWS.h_climb2 = small(HH, 2, LO.climb2);
 ROWS.h_die1 = compose(16, 16, [[HF], [LO.die, 0, 7]]);
-ROWS.h_die2 = compose(16, 16, [[HF], [['S..............S', 'S..............S', 'C..............C', '.C............C.', '..CC........CC..'], 0, 3], [LO.die.slice(0, 1).map(() => '...KCCCCCCCCK...').concat(LO.die.slice(1).map((r, i) => i === 0 ? '...KCCCCCCCCK...' : r)), 0, 7]]);
+const DIE_ARMS = ['S..............S', 'S..............S', 'C..............C', '.C............C.', '..CC........CC..'];
+ROWS.h_die2 = compose(16, 16, [[HF], [DIE_ARMS, 0, 3], [['...KCCCCCCCCK...', '...KCCCCCCCCK...'].concat(LO.die.slice(2)), 0, 7]]);
 for (const k in ROWS) if (k.startsWith('h_') && (ROWS[k].length !== 16 || ROWS[k].some(r => r.length !== 16))) throw new Error('tamanho errado ' + k);
 
 const HERO = { K: '#1c1828', C: '#20a08c', L: '#9cf0d8', M: '#127060', S: '#fcc8a0', T: '#d89878', B: '#f87860', E: '#1c1828', P: '#3c4ca8', Q: '#283070', O: '#f87818', N: '#b84808' };

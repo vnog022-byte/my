@@ -1,102 +1,121 @@
 /* ---- Heroi grande TICO (16x32): cabeca HH/HH2 (12x7, em x=2) e paletas da secao hero.
-   Corpo em 3/4 de perfil: moletom com 11 linhas (7-17), pernas com 14 (18-31).
-   As partes sao desenhadas so com o preenchimento; o contorno e gerado sozinho
-   ('k' = contorno preto; 's' = contorno suave, que vira M quando cai sobre o moletom). ---- */
-const HB_paint = parts => {
-  const g = Array.from({ length: 32 }, () => new Array(16).fill('.'));
-  const put = (X, Y, ch) => { if (X >= 0 && X < 16 && Y >= 0 && Y < 32) g[Y][X] = ch; };
-  for (const [rows, dx = 0, dy = 0, ol = ''] of parts) {
-    const h = rows.length, w = rows[0].length;
-    const on = (x, y) => y >= 0 && y < h && x >= 0 && x < w && rows[y][x] !== '.';
-    if (ol) for (let y = -1; y <= h; y++) for (let x = -1; x <= w; x++) {
-      if (on(x, y) || !(on(x - 1, y) || on(x + 1, y) || on(x, y - 1) || on(x, y + 1))) continue;
-      const X = x + dx, Y = y + dy;
-      if (X >= 0 && X < 16 && Y >= 0 && Y < 32) put(X, Y, ol === 's' && 'CLM'.includes(g[Y][X]) ? 'M' : 'K');
-    }
-    rows.forEach((r, y) => { for (let x = 0; x < w; x++) if (r[x] !== '.') put(x + dx, y + dy, r[x]); });
-  }
-  return g.map(r => r.join(''));
-};
-/* moletom (linhas 7-17) */
+   Tronco de frente em 3/4 (linhas 7-17) com os bracos nas laterais, como no heroi pequeno:
+   o braco que vai para tras aparece a esquerda, o que vai para frente a direita (o de longe sombreado).
+   Pernas de perfil: P/O = perna e tenis de perto, Q/N = de longe; K embaixo do tenis = sola.
+   Caminhada de 8 quadros: o pe de apoio recua 2-3 px por quadro (HERO_STEP_B = 2,5 px), assim nao patina. ---- */
+/* tronco (sem bracos), linhas 7-17 */
 const HB_TORSO = [
   '...KCCCCCCCCK...',
-  '...KCCCCCCCCK...',
-  '...KCCCCCCCCCK..',
-  '...KCCCCCCCCCK..',
-  '...KCCCCCCCCMK..',
-  '...KCCCCCCCCMK..',
-  '...KCCCCCCCCMK..',
-  '...KCCCCCCCMK...',
-  '...KCCCCCCCMK...',
-  '...KMMMMMMMMK...',
+  '....KCCCCCCK....',
+  '....KCCCCCCK....',
+  '....KCCCCCCK....',
+  '....KCCCCCCK....',
+  '....KCCCCCCK....',
+  '....KCCCCCCK....',
+  '....KCMMMMCK....',
+  '....KCMCCMCK....',
+  '....KCMMMMCK....',
   '....KLLLLLLK....'];
-/* bracos (so preenchimento; [linhas, x, y]) */
-const HB_ARM = {
-  B2: [['...LC', '..CCC', '..CCC', '.CCC.', '.CC..', 'CC...', 'LL...', 'SS...', 'ST...'], 3, 8],
-  B1: [['..LC', '.CCC', '.CCC', '.CC.', '.CC.', 'CC..', 'LL..', 'SS..', 'ST..'], 4, 8],
-  D:  [['LC.', 'CCC', 'CCC', 'CC.', 'CC.', 'CC.', '.CC', '.LL', '.SS', '.ST'], 6, 8],
-  F1: [['LC..', 'CCC.', 'CCC.', '.CC.', '.CC.', '.CCC', '..LL', '..SS', '..ST'], 6, 8],
-  F2: [['LC....', 'CCC...', '.CCC..', '..CC..', '..CCC.', '...CCL', '....LS', '....SS'], 6, 8],
-  T:  [['LC.......', 'CCCCC....', 'CCCCCCLSS', '...CCCLST'], 6, 8],
+const HB_PELVIS = ['....KPPPPPPK....'];
+/* bracos: [linhas, x, y relativo ao topo do tronco]. L* = lado esquerdo (para tras), R* = lado direito (para frente) */
+const HB_AL = {
+  down:  [['..KC', '.KCC', '.KCC', '.KCC', '.KCC', '.KCC', '.KLL', '.KSS', '.KST', '..KK'], 0, 0],
+  back1: [['..KC', '.KCC', '.KCC', '.KCC', 'KCCK', 'KCCK', 'KLLK', 'KSSK', 'KTSK', '.KK.'], 0, 0],
+  back2: [['..KC', '.KCC', '.KCC', 'KCCK', 'KCCK', 'KLLK', 'SSK.', 'TSK.', 'KK..'], 0, 0],
 };
-/* pernas: 8 fases de uma perna (desenhada como a perna de perto, P/O), linhas 18-30; a 31 e a sola (contorno) */
+const HB_AR = {
+  down:  [mirror(HB_AL.down[0]), 12, 0],
+  fwd1:  [['.CK..', '.CCK.', '.CCK.', '.CCK.', '.KCCK', '.KCCK', '.KLLK', '.KSSK', '.KSTK', '..KK.'], 11, 0],
+  fwd2:  [['.CK..', '.CCK.', '.CCK.', '.KCCK', '.KCCK', '.KLLK', '..KSS', '..KST', '...KK'], 11, 0],
+  throw: [['.CK..', '.CCKK', '.CLSS', '.CLSS', '.KKKK'], 11, 1],
+  up:    [['...SS', '...SS', '..KLK', '.KCCK', '.CCK.', '.CK..'], 11, -4],
+};
+const HB_dark = a => [recolor(a[0], { C: 'M', L: 'C', S: 'T' }), a[1], a[2]];
+/* pernas: 8 fases de UMA perna (desenhada como a de perto); 12 linhas quando o corpo desce 1 px, 13 quando nao */
 const HB_LEG = [
-  // 0 contato: calcanhar em 12, ponta do pe levantada
-  ['.....PPP........', '.....PPP........', '......PPP.......', '......PPP.......', '.......PPP......', '.......PPP......',
-   '........PP......', '.........PP.....', '.........PP.....', '..........PP....', '..........PP....', '...........OOOO.', '...........OO...'],
-  // 1 carga: pe chato (calcanhar 9), joelho um pouco dobrado
-  ['.....PPP........', '.....PPP........', '......PPP.......', '......PPP.......', '......PPP.......', '.......PPP......',
-   '.......PP.......', '........PP......', '........PP......', '........PP......', '.........PP.....', '.........OOO....', '.........OOOO...'],
-  // 2 passagem (apoio): perna reta embaixo do quadril (calcanhar 6)
-  ['.....PPP........', '.....PPP........', '.....PPP........', '.....PPP........', '......PP........', '......PP........',
-   '......PP........', '.....PPP........', '.....PPP........', '......PP........', '......PP........', '......OOO.......', '......OOOO......'],
-  // 3 impulso: calcanhar subindo, ponta em 4-6
-  ['.....PPP........', '.....PPP........', '....PPP.........', '....PPP.........', '....PP..........', '....PP..........',
-   '...PP...........', '...PPP..........', '...PP...........', '...PP...........', '...OO...........', '...OOO..........', '....OOO.........'],
-  // 4 saida: so a ponta (3) no chao
-  ['.....PPP........', '.....PPP........', '....PPP.........', '....PPP.........', '...PPP..........', '...PP...........',
-   '..PP............', '..PP............', '.PP.............', '.PP.............', '.OO.............', '.OOO............', '..OO............'],
-  // 5 balanco: pe solto atras, joelho dobrando
-  ['.....PPP........', '.....PPP........', '.....PPP........', '.....PPP........', '.....PP.........', '.....PP.........',
-   '....PP..........', '...PP...........', '..PP............', '.PP.............', '.OOO............', '..OOO...........', '................'],
-  // 6 passagem (balanco): joelho para frente, pe levantado
-  ['.....PPP........', '.....PPP........', '......PPP.......', '......PPP.......', '.......PPP......', '........PP......',
-   '.......PP.......', '......PP........', '.....PP.........', '....OOOO........', '.....OOO........', '................', '................'],
-  // 7 alcance: perna se estica para frente, pe um pouco acima do chao
-  ['.....PPP........', '.....PPP........', '......PPP.......', '......PPP.......', '.......PPP......', '.......PPP......',
-   '........PP......', '........PP......', '.........PP.....', '.........PP.....', '..........OOO...', '..........OOOO..', '................'],
+  // 0 contato: perna esticada a frente, pe chato (tornozelo 11)
+  ['.......PPP......', '.......PPP......', '........PPP.....', '........PPP.....', '.........PPP....', '.........PPP....',
+   '..........PP....', '..........PP....', '...........PP...', '...........OOO..', '...........OOOOO', '...........KKKKK'],
+  // 1 carga: joelho cede um pouco (tornozelo 9)
+  ['.......PPP......', '.......PPP......', '........PPP.....', '........PPP.....', '.........PPP....', '.........PP.....',
+   '.........PP.....', '.........PP.....', '.........PP.....', '.........OOO....', '.........OOOOO..', '.........KKKKK..'],
+  // 2 passagem: perna reta embaixo do quadril (tornozelo 6)
+  ['.......PPP......', '.......PPP......', '.......PPP......', '.......PPP......', '.......PPP......', '.......PP.......',
+   '.......PP.......', '......PP........', '......PP........', '......PP........', '......OOO.......', '......OOOOO.....', '......KKKKK.....'],
+  // 3 impulso: perna inclinada para tras, pe ainda chato (tornozelo 4)
+  ['.......PPP......', '.......PPP......', '......PPP.......', '......PPP.......', '.....PPP........', '.....PP.........',
+   '.....PP.........', '....PP..........', '....PP..........', '....PP..........', '....OOO.........', '....OOOOO.......', '....KKKKK.......'],
+  // 4 saida: so a ponta do pe no chao, calcanhar levantado
+  ['......PPP.......', '......PPP.......', '.....PPP........', '.....PPP........', '....PPP.........', '....PP..........',
+   '...PP...........', '...PP...........', '..PP............', '.OOO............', '.KOOOO..........', '..KKKK..........'],
+  // 5 balanco: joelho dobra, pe sobe atras
+  ['......PPP.......', '......PPP.......', '.....PPP........', '.....PPP........', '.....PP.........', '....PPP.........',
+   '...PPP..........', '..PPP...........', '.OOO............', '.KOOO...........', '..KKK...........', '................'],
+  // 6 passagem (balanco): joelho a frente, pe levantado embaixo do corpo
+  ['.......PPP......', '........PPP.....', '........PPP.....', '.........PPP....', '.........PPP....', '........PPP.....',
+   '.......PP.......', '.......OOO......', '.......OOOO.....', '.......KKKK.....', '................', '................', '................'],
+  // 7 alcance: perna se estica a frente, pe 1 px acima do chao
+  ['.......PPP......', '........PPP.....', '........PPP.....', '.........PPP....', '.........PPP....', '..........PP....',
+   '..........PP....', '..........PP....', '...........PP...', '...........OOO..', '...........OOOOO', '...........KKKKK', '................'],
 ];
 const HB_far = rows => recolor(rows, { P: 'Q', O: 'N' });
 const HB_BOB = [1, 1, 0, 0];
-const HB_ARMSEQ = ['B2', 'B1', 'D', 'F1', 'F2', 'F1', 'D', 'B1'];
-const HB_shade = rows => recolor(rows, { C: 'M', L: 'M', S: 'T' });
-/* monta um quadro: braco de longe, pernas (de longe, de perto), tronco, cabeca, braco de perto */
-const HB_frame = (near, far, armN, armF, dy, head = HH) => HB_paint([
-  [HB_shade(armF[0]), armF[1] + 2, armF[2] + dy, 'k'],
-  [HB_far(far), 0, 18, 'k'],
-  [near, 0, 18, 'k'],
-  [HB_TORSO, 0, 7 + dy],
-  [head, 2, dy],
-  [armN[0], armN[1], armN[2] + dy, 'k'],
-]);
-const HERO_WALK_B = ['w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7', 'w8'], HERO_STEP_B = 3;
+/* monta um quadro: pernas (longe, perto), quadril, tronco, cabeca, bracos */
+const HB_frame = (near, far, aL, aR, dy = 0, o = {}) => {
+  const dx = o.dx || 0, head = o.head || HH, ty = 7 + dy;
+  return compose(16, 32, [
+    [HB_far(far), 0, 32 - far.length],
+    [near, 0, 32 - near.length],
+    [HB_PELVIS, dx, ty + 11],
+    [HB_TORSO, dx, ty],
+    [head, 2 + dx, dy],
+    [aL[0], aL[1] + dx, ty + aL[2]],
+    [aR[0], aR[1] + dx, ty + aR[2]],
+  ]);
+};
+const HERO_WALK_B = ['w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7', 'w8'], HERO_STEP_B = 2.5;
+/* bracos por quadro: [esquerdo, direito, qual e o de perto: 'L' ou 'R'] */
+const HB_WARMS = [['back2', 'fwd2', 'L'], ['back1', 'fwd1', 'L'], ['down', 'down', ''], ['back1', 'fwd1', 'R'],
+  ['back2', 'fwd2', 'R'], ['back1', 'fwd1', 'R'], ['down', 'down', ''], ['back1', 'fwd1', 'L']];
 for (let f = 0; f < 8; f++) {
   const near = HB_LEG[f], far = HB_LEG[(f + 4) % 8], dy = HB_BOB[f % 4];
-  const aN = HB_ARM[HB_ARMSEQ[f]], aF = HB_ARM[HB_ARMSEQ[(f + 4) % 8]];
-  ROWS['H_' + HERO_WALK_B[f]] = HB_frame(near, far, aN, aF, dy);
-  ROWS['H_' + HERO_WALK_B[f] + '_t'] = HB_frame(near, far, HB_ARM.T, aF, dy);
+  const [l, r, n] = HB_WARMS[f];
+  const aL = n === 'R' ? HB_dark(HB_AL[l]) : HB_AL[l], aR = n === 'L' ? HB_dark(HB_AR[r]) : HB_AR[r];
+  ROWS['H_' + HERO_WALK_B[f]] = HB_frame(near, far, aL, aR, dy);
+  ROWS['H_' + HERO_WALK_B[f] + '_t'] = HB_frame(near, far, aL, HB_AR.throw, dy);
 }
-/* parado */
-const HB_STAND_N = ['......PPP.......', '......PPP.......', '......PPP.......', '......PPP.......', '.......PP.......', '.......PP.......',
-  '.......PP.......', '......PPP.......', '......PPP.......', '.......PP.......', '.......PP.......', '.......OOO......', '.......OOOO.....'];
-const HB_STAND_F = ['....PPP.........', '....PPP.........', '....PPP.........', '....PPP.........', '....PP..........', '....PP..........',
-  '....PP..........', '...PPP..........', '...PPP..........', '....PP..........', '....PP..........', '....OOO.........', '....OOOO........'];
-ROWS.H_stand = HB_frame(HB_STAND_N, HB_STAND_F, HB_ARM.D, HB_ARM.D, 0);
-ROWS.H_stand2 = HB_frame(HB_STAND_N, HB_STAND_F, HB_ARM.D, HB_ARM.D, 0, HH2);
-ROWS.H_stand_t = HB_frame(HB_STAND_N, HB_STAND_F, HB_ARM.T, HB_ARM.D, 0);
-ROWS.H_stand2_t = HB_frame(HB_STAND_N, HB_STAND_F, HB_ARM.T, HB_ARM.D, 0, HH2);
-/* acoes (provisorio) */
-for (const k of ['jump', 'fall', 'skid', 'land', 'climb1', 'climb2']) {
-  ROWS['H_' + k] = HB_frame(HB_LEG[k === 'jump' ? 6 : 1], HB_LEG[k === 'jump' ? 3 : 5], HB_ARM.F2, HB_ARM.B2, 0);
-  if (!k.startsWith('climb')) ROWS['H_' + k + '_t'] = HB_frame(HB_LEG[1], HB_LEG[5], HB_ARM.T, HB_ARM.B2, 0);
-}
+/* parado: pernas de frente, separadas */
+const HB_STAND = ['....QQQ..PPP....', '....QQQ..PPP....', '....QQQ..PPP....', '....QQQ..PPP....', '....QQQ..PPP....', '.....QQ..PP.....',
+  '.....QQ..PP.....', '.....QQ..PP.....', '.....QQ..PP.....', '.....QQ..PP.....', '....NNN..OOO....', '....NNNN.OOOOO..', '....KKKK.KKKKK..'];
+ROWS.H_stand = HB_frame(HB_STAND, [], HB_AL.down, HB_AR.down);
+ROWS.H_stand2 = HB_frame(HB_STAND, [], HB_AL.down, HB_AR.down, 0, { head: HH2 });
+ROWS.H_stand_t = HB_frame(HB_STAND, [], HB_AL.down, HB_AR.throw);
+ROWS.H_stand2_t = HB_frame(HB_STAND, [], HB_AL.down, HB_AR.throw, 0, { head: HH2 });
+/* pulo: joelho de perto encolhido a frente, perna de longe esticada para tras */
+const HB_JUMP_N = ['.......PPPP.....', '........PPPPP...', '.........PPPPP..', '...........PPP..', '...........PP...', '...........PP...',
+  '..........OOO...', '..........OOOOO.', '..........KKKKK.', '................', '................', '................', '................'];
+const HB_JUMP_F = ['......PPP.......', '......PPP.......', '.....PPP........', '.....PPP........', '....PPP.........', '....PP..........',
+  '...PP...........', '...PP...........', '..PP............', '.OOO............', '.KOOOO..........', '..KKKK..........', '................'];
+ROWS.H_jump = HB_frame(HB_JUMP_N, HB_JUMP_F, HB_dark(HB_AL.back2), HB_AR.up);
+ROWS.H_jump_t = HB_frame(HB_JUMP_N, HB_JUMP_F, HB_dark(HB_AL.back2), HB_AR.throw);
+ROWS.H_fall = HB_frame(HB_LEG[7], HB_LEG[5].concat(['................']).slice(-13), HB_dark(HB_AL.back1), HB_AR.up);
+ROWS.H_fall_t = HB_frame(HB_LEG[7], HB_LEG[5].concat(['................']).slice(-13), HB_dark(HB_AL.back1), HB_AR.throw);
+/* derrapagem: desliza para tras, pernas fincadas a esquerda, corpo inclinado para frente */
+const HB_SKID_N = ['.......PPP......', '.......PPP......', '......PPP.......', '......PPP.......', '.....PPP........', '.....PP.........',
+  '....PP..........', '....PP..........', '...PP...........', '...PP...........', '..OOO...........', '..OOOOO.........', '..KKKKK.........'];
+const HB_SKID_F = ['......PPP.......', '.....PPP........', '.....PPP........', '....PPP.........', '....PP..........', '...PP...........',
+  '...PP...........', '..PP............', '..PP............', '.PP.............', 'OOO.............', 'OOOOO...........', 'KKKKK...........'];
+ROWS.H_skid = HB_frame(HB_SKID_N, HB_SKID_F, HB_dark(HB_AL.back1), HB_AR.fwd2, 0, { dx: 1 });
+ROWS.H_skid_t = HB_frame(HB_SKID_N, HB_SKID_F, HB_dark(HB_AL.back1), HB_AR.throw, 0, { dx: 1 });
+/* aterrissagem: agachado, corpo 2 px abaixo, joelhos para fora */
+const HB_LAND = ['....QQQ..PPP....', '...QQQ....PPP...', '...QQ......PP...', '...QQ......PP...', '....QQ....PP....', '....QQ....PP....',
+  '....QQ....PP....', '....QQ....PP....', '...NNN....OOO...', '...NNNN...OOOO..', '...KKKK...KKKK..'];
+ROWS.H_land = HB_frame(HB_LAND, [], HB_AL.down, HB_AR.down, 2);
+ROWS.H_land_t = HB_frame(HB_LAND, [], HB_AL.down, HB_AR.throw, 2);
+/* mastro (mastro nas colunas 12-13): maos alternam no mastro, joelho de perto abraca o mastro */
+const HB_CLIMB_N = ['.......PPPP.....', '........PPPPP...', '..........PPP...', '..........PP....', '..........OOOO..', '..........KKKK..',
+  '................', '................', '................', '................', '................', '................', '................'];
+const HB_CLIMB_F = ['......PPP.......', '......PPP.......', '......PPP.......', '......PP........', '......PP........', '......PP........',
+  '......PP........', '......PP........', '......OOO.......', '......OOOO......', '......KKKK......', '................', '................'];
+ROWS.H_climb1 = HB_frame(HB_CLIMB_N, HB_CLIMB_F, HB_dark(HB_AL.down), HB_AR.up);
+ROWS.H_climb2 = HB_frame(HB_CLIMB_N, HB_CLIMB_F, HB_AL.down, HB_AR.fwd1);
