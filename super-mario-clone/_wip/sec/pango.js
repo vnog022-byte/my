@@ -23,33 +23,37 @@ const PG_DOME = [
   '.....#########..',
   '......#######...',
 ];
-const PG_TILE = ['ASAA', 'AAAA', 'KAAK', 'AKKA'];
-const pgScaled = (mask, tile, y0) => {
+const PG_TILE = ['ASSA', 'AAAA', 'KAAK', 'AKKA'];
+const pgScaled = (mask, tile, y0, lit) => {
   const th = tile.length, at = (x, y) => (mask[y] || '')[x] === '#';
+  const inner = (x, y) => at(x - 1, y) && at(x + 1, y) && at(x, y - 1) && at(x, y + 1);
   return mask.map((r, y) => [...r].map((c, x) => {
     if (!at(x, y)) return '.';
-    if (!(at(x - 1, y) && at(x + 1, y) && at(x, y - 1) && at(x, y + 1))) return 'K';
+    if (!inner(x, y)) return 'K';
     const band = Math.floor((y + y0) / th);
-    return tile[(y + y0) % th][(x + band * 2) % 4];
+    let ch = tile[(y + y0) % th][(x + band * 2) % 4];
+    if (ch === 'K' && [[-1, 0], [1, 0], [0, -1], [0, 1]].some(([a, b]) => !inner(x + a, y + b))) ch = 'A';   // 1px de folga
+    if (ch === 'S' && !lit(x, y)) ch = 'A';                                                               // brilho so no alto/esquerda
+    return ch;
   }).join(''));
 };
-const PG_ARMOR = pgScaled(PG_DOME, PG_TILE, 1);
+const PG_ARMOR = pgScaled(PG_DOME, PG_TILE, 1, (x, y) => x + y < 17);
 /* cauda: base larga sob a armadura afinando em diagonal ate a borda direita, ponta no chao, 2 escamas */
 const PG_TAIL = [
-  'KKKKK...',
-  'KAASAK..',
-  '.KAAAAK.',
-  '..KKKAK.',
+  'KKKKKK..',
+  'KAASAAK.',
+  '.KAAAAAK',
+  '..KKKAAK',
   '...KSAAK',
+  '...KAAAK',
   '....KAAK',
-  '.....KAK',
-  '......KK',
-  '.......K',
+  '....KSAK',
+  '.....KKK',
 ];
 /* cabeca baixa: focinho conico (1->2->3px) com nariz K de 2px, queixo subindo em diagonal,
    olho de 2px na vertical sob a palpebra pesada (as escamas do bone) */
-const PG_HEAD = ['.....KKKK.', '...KKAAAAK', '.KKSSAAAAK', 'KSSSSSKSSK', 'KKSSSSKSSK', '..KKSSSSK.', '....KKKK..'];
-const PG_BELLY = ['.KSSK', 'KSSSK', '.KKK.'];
+const PG_HEAD = ['....KKKK', '...KAAAK', '.KKSSKSK', 'KSSSSKSK', '.KSSSSSK', '..KKKKK.'];
+const PG_BELLY = ['..KSSK', '.KSSSK', '..KKKK'];
 /* pe: sola K chapada e 2 garras S de 1px para a frente, separadas */
 const pgFoot = c => ['SK' + c + c + 'K', 'K' + c + c + c + 'K', 'SKKKK'];
 const pgLeg = (c, foot, top) => {               // perna = coxa (linha de cima) + canela + pe; foot = coluna da garra
@@ -64,13 +68,13 @@ const pgLeg = (c, foot, top) => {               // perna = coxa (linha de cima) 
 const pgLift = (c, foot, top) => { const l = pgLeg(c, foot, top); return [l[0], l[3], l[4], l[5], '.'.repeat(16), '.'.repeat(16)]; };  // pe erguido 2px
 /* ciclo de 4 quadros, 4 ticks cada (2px a 0,5px/tick): o pe de apoio recua 2px por quadro (1 -> 3 -> 5).
    contato: pernas em tesoura (frente estendida, tras empurrando); passagem: pernas juntas, corpo +1px.
-   perna da frente sempre S, perna de tras sempre A. A cabeca balanca em fase oposta ao corpo. */
+   perna da frente sempre A, perna de tras sempre escura (K); garras S. A cabeca balanca em fase oposta ao corpo. */
 const pgWalk = (body, head, legs) => compose(16, 24, [[PG_TAIL, 8, 15 + body], [PG_ARMOR, 0, body],
-  [PG_BELLY, 5, 16 + body], [PG_HEAD, 0, 11 + head], ...legs.map(l => [l, 0, 18])]);
-ROWS.pango_a = pgWalk(0, -1, [pgLeg('A', 5, 7), pgLeg('S', 1, 5)]);          // contato: frente S adiante
-ROWS.pango_c = pgWalk(-1, 0, [pgLift('A', 6, 6), pgLeg('S', 3, 5)]);            // passagem: S apoiada, A passando
-ROWS.pango_b = pgWalk(0, -1, [pgLeg('A', 1, 5), pgLeg('S', 5, 7)]);          // contato: tras A adiante
-ROWS.pango_d = pgWalk(-1, 0, [pgLeg('A', 3, 5), pgLift('S', 6, 6)]);            // passagem: A apoiada, S passando
+  [PG_HEAD, 0, 12 + head], [PG_BELLY, 5, 15 + body], ...legs.map(l => [l, 0, 18])]);
+ROWS.pango_a = pgWalk(0, -1, [pgLeg('K', 5, 6), pgLeg('A', 1, 5)]);          // contato: perna da frente (A) adiante
+ROWS.pango_c = pgWalk(-1, 0, [pgLift('K', 6, 6), pgLeg('A', 3, 5)]);         // passagem: A apoiada, escura passando
+ROWS.pango_b = pgWalk(0, -1, [pgLeg('K', 1, 5), pgLeg('A', 5, 6)]);          // contato: perna de tras (escura) adiante
+ROWS.pango_d = pgWalk(-1, 0, [pgLeg('K', 3, 5), pgLift('A', 6, 6)]);         // passagem: escura apoiada, A passando
 const PG_WALK = ['pango_a', 'pango_c', 'pango_b', 'pango_d'];
 
 /* derrubado (de pe aqui; o jogo vira de ponta-cabeca): olho em X 3x3 cercado de S, boca aberta,
@@ -81,42 +85,47 @@ ROWS.pango_x = compose(16, 24, [[PG_TAIL, 8, 15], [PG_ARMOR],
   [['...KSSK', '..KSSK.', '.KSSK..', 'SKKK...', '.S.....'], 2, 19],
   [['KAAK...', '.KAAK..', '..KAAK.', '...KKKS', '.....S.'], 9, 19]]);
 
-/* bola: pangolim enrolado. Contorno limpo, 1px de folga, anel externo de 8 escamas em U (arco K, 1px S)
-   e anel interno de 4 escamas deslocadas, nucleo com brilho. A ponta da cauda (S contra K, na borda) da a volta
-   nos 4 quadros (rot90 = sentido horario = rolar para a direita); a luz do alto a esquerda e reaplicada. */
+/* bola: pangolim enrolado. Metade de cima com fileiras de escamas em U (o mesmo motivo da armadura,
+   1px de folga do contorno); a cauda escamada envolve meia volta por baixo como uma faixa, com a ponta
+   clara (S contra K) na borda. Isso quebra a simetria e mostra o giro: rot90 = sentido horario = rolar
+   para a direita. O brilho fixo do alto a esquerda e reaplicado em cada quadro. */
 const PG_BALL = [
   '.....KKKKKK.....',
   '...KKAAAAAAKK...',
-  '..KAAKKAAKKAAK..',
-  '.KAAKSAKKASKAAK.',
-  '.KAKKAAAAAAKKAK.',
-  'KAKAAAAKKAAAAKAK',
-  'KAKSAAKAAKAASKAK',
-  'KAAKAKASAAKAKAAK',
-  'KAAKAKAAAAKAKAAK',
-  'KKKSAAKAAKAASKAK',
-  'KSKAAAAKKAAAAKAK',
-  '.KSKKAAAAAAKKAK.',
-  '.KSAKSAKKASKAAK.',
-  '..KSKKKAAKKAAK..',
+  '..KAAAAAAAAAAK..',
+  '.KAKKAAKKAAKKAK.',
+  '.KAAAKKAAKKAAAK.',
+  'KAAAAAAAAAAAAAAK',
+  'KAAAAKKAAKKAAAAK',
+  'KAKKKAAKKAAKKAAK',
+  'KSSKAAAAAAAAKAAK',
+  'KAAKAAAKKAAAKAAK',
+  'KKAKAKKAAKKAKAAK',
+  '.KAAKAAAAAAKAKK.',
+  '.KAKAKKKKKKAAAK.',
+  '..KAAAAAKAAAAK..',
   '...KKAAAAAAKK...',
   '.....KKKKKK.....',
 ];
-const PG_LIGHT = ['', '.....SSS', '...SS', '..S', '..S'];
+const PG_LIGHT = ['', '.....SSS', '...SSS', '..S', '..S', '.S'];
 const pgLit = rows => rows.map((r, y) => r.replace(/./g, (ch, x) => ch === 'A' && (PG_LIGHT[y] || '')[x] === 'S' ? 'S' : ch));
 let pgB = PG_BALL;
 for (let i = 0; i < 4; i++) { ROWS['ball' + i] = pgLit(pgB); pgB = rot90(pgB); }
-/* acordando: focinho espiando sob meia palpebra e 2 pezinhos com garra; a bola inteira treme 1px
-   (quadros de 17px de largura para deslocar a bola com o contorno intacto) */
-const PG_PEEK = ['..KKKK.', '.KAAAAK', 'KSSSKSK', 'KKSSKSK', '.KKKKKK'];
-const PG_PAW = ['.KKK', 'SKKK'];
-const pgPeek = dx => compose(17, 16, [[ROWS.ball0, dx], [PG_PEEK, dx, 7], [PG_PAW, dx + 2, 14], [PG_PAW, dx + 10, 14]]);
+/* acordando: a cabeca sai por uma fresta na borda de baixo/esquerda, com o focinho (1->2->3px) e o nariz
+   fora do contorno e o olho meio fechado na borda; uma pata com garras fora do circulo, do outro lado.
+   A bola treme 1px: quadros de 17px; ball_peek tem a bola na coluna 0 e ball_peek2 na coluna 1, e
+   pangoSprite troca os dois quando o sprite vira, para a bola parada ficar sempre na coluna de ball0. */
+const PG_PEEK = ['...KKKK', '..KKAAK', '.KSSKSK', 'KSSSKSK', '.KKSSSK', '...KKK.'];
+const PG_PAW = ['..KK', '.KAAK', 'KKKKS'];
+const pgPeek = dx => compose(17, 16, [[ROWS.ball0, dx], [PG_PEEK, dx, 10], [PG_PAW, dx + 12, 13]]);
 ROWS.ball_peek = pgPeek(0);
 ROWS.ball_peek2 = pgPeek(1);
 function pangoSprite(e, tick, px) {
   if (e.state === 'dead') return { id: e.h === 24 ? 'pango_x' : 'ball0', pal: 'pango', flip: e.dir > 0, vflip: true };
   if (e.state === 'walk') return { id: PG_WALK[Math.floor(e.anim / 4) % 4], pal: 'pango', flip: e.dir > 0 };
   if (e.state === 'shellmove') return { id: 'ball' + (((Math.floor(e.roll / 6) % 4) + 4) % 4), pal: 'pango' };
-  const t = e.shellT % 150;
-  return { id: t > 105 ? (Math.floor(t / 3) % 2 ? 'ball_peek2' : 'ball_peek') : 'ball0', pal: 'pango', flip: px > e.x };
+  const t = e.shellT % 150, flip = px > e.x;
+  if (t <= 105) return { id: 'ball0', pal: 'pango', flip };
+  const shake = Math.floor(t / 3) % 2 === 1;                 // virado, ball_peek2 e o quadro "parado"
+  return { id: shake !== flip ? 'ball_peek2' : 'ball_peek', pal: 'pango', flip };
 }
