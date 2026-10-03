@@ -1287,8 +1287,9 @@ function drawTiles() {
 }
 function drawEnemy(e) {
   const f = enemySprite(e, G.tick, p.x), im = spr(f.id, f.pal, f.flip, f.vflip);
-  /* alinhado pela base da hitbox: quadros mais altos que ela (pango andando) sobem acima de e.y */
-  ctx.drawImage(im, Math.round(e.x - 1 - (f.ox || 0) - camX), Math.round(e.y + e.h - im.height));
+  /* alinhado pela base da hitbox: quadros mais altos que ela (pango andando) sobem acima de e.y;
+     virado de cabeca para baixo, a arte (que encosta na base do quadro) fica no topo: alinha pelo topo */
+  ctx.drawImage(im, Math.round(e.x - 1 - (f.ox || 0) - camX), Math.round(f.vflip ? e.y : e.y + e.h - im.height));
 }
 function drawPlayer() {
   if (p.state === 'bonus') return;
