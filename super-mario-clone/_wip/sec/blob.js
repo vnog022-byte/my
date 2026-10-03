@@ -13,9 +13,9 @@ const blobMask = (on, extra) => {
 /* formas (lx..rx, top, recuo por linha; base na linha 12): fx = x do olho da frente, a = linha de cima do
    olho da frente, drip = colunas onde a gosma cede 1 px abaixo da base (desligado: comia os pes) */
 const BLOB_SHAPE = {
-  c: { lx: 0, rx: 15, top: 3, ins: [4, 2, 1, 1, 0, 0, 0, 0, 0, 1], fx: 3, a: 5, drip: [] },
+  c: { lx: 0, rx: 15, top: 3, ins: [2, 1, 0, 0, 0, 0, 0, 0, 0, 1], fx: 3, a: 4, drip: [] },
   m: { lx: 1, rx: 14, top: 2, ins: [3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1], fx: 3, a: 4, drip: [] },
-  p: { lx: 1, rx: 14, top: 1, ins: [3, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1], fx: 4, a: 4, drip: [] } };
+  p: { lx: 1, rx: 14, top: 1, ins: [3, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1], fx: 4, a: 3, drip: [] } };
 const BLOB_CYCLE = ['c', 'm', 'p', 'm', 'c', 'm', 'p', 'm'];
 const blobBody = (i, ko) => {
   const s = BLOB_SHAPE[BLOB_CYCLE[i % 8]], prev = BLOB_SHAPE[BLOB_CYCLE[(i + 7) % 8]];
@@ -40,7 +40,7 @@ const BLOB_EYES = {
 const blobFace = (s, kind) => {
   const E = BLOB_EYES[kind], parts = [[['LL'], 6, s.top + 1]];
   if (kind === 'ko') parts.push([E[0], s.fx, s.a + 1], [E[1], 9, s.a + 1], [['KLLK'], 6, s.a + 6]);
-  else parts.push([E[0], s.fx, s.a], [E[1], 9, s.a], [['KKKK', 'KLLK'], s.fx + 3, s.a + 4]);
+  else parts.push([E[0], s.fx, s.a], [E[1], 9, s.a], [['KKKK', 'KLLK'], s.fx + 3, s.a + 5]);
   return parts;
 };
 const BLOB_NEAR = ['.KKK.', 'KLLLK', 'KLLLK', '.KKK.'], BLOB_FAR = ['.KKK.', 'KBBBK', 'KBBBK', '.KKK.'];
@@ -58,7 +58,7 @@ ROWS.blob_n_b = ROWS.blob_w0_b; ROWS.blob_sq_b = ROWS.blob_w2_b; ROWS.blob_st_b 
 ROWS.blob_flat = compose(16, 16, [
   [blobMask((x, y) => (y === 10 && x >= 5 && x <= 10) || (y === 11 && x >= 3 && x <= 12) || (y === 12 && x >= 2 && x <= 13)
     || (y === 13 && x >= 1 && x <= 14) || y >= 14)],
-  [['LL'], 6, 11], [['KK....KK'], 4, 12], [['KKKK'], 6, 13], [['LL'], 7, 14]]);
+  [['LL'], 6, 11], [['KK....KK'], 4, 12], [['KK'], 7, 13], [['LL'], 7, 14]]);
 /* derrubada (casco/bloco/fogo): olhos em X cheio, boca aberta, pes juntos na base — virada com vflip */
 ROWS.blob_ko = compose(16, 16, [[BLOB_FAR, 8, 12], [BLOB_NEAR, 3, 12], [blobBody(1, true)], ...blobFace(BLOB_SHAPE.m, 'ko')]);
 PAL.blob = { K: '#000000', B: '#8000f0', L: '#fcc4fc' };
