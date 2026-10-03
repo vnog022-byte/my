@@ -78,12 +78,12 @@ ROWS.pango_d = pgWalk(-1, 0, [pgLeg('K', 3, 5), pgLift('A', 6, 6)]);         // 
 const PG_WALK = ['pango_a', 'pango_c', 'pango_b', 'pango_d'];
 
 /* derrubado (de pe aqui; o jogo vira de ponta-cabeca): olho em X 3x3 cercado de S, boca aberta,
-   barriga grande e patas afastadas e dobradas */
+   barriga grande e patas curtas de 3px dobradas junto a barriga, garras S */
 ROWS.pango_x = compose(16, 24, [[PG_TAIL, 8, 15], [PG_ARMOR],
   [['..KSSSSK', '.KSSSSSK', '.KSSSSSK', '..KKKKK.'], 3, 16],
   [['....KKKKK.', '..KKSSSSSK', '.KSSKSKSSK', 'KSSSSKSSSK', 'KSSSKSKSSK', '.KKKKSSSSK', '.KSSSKKKK.', '..KKK.....'], 0, 9],
-  [['...KSSK', '..KSSK.', '.KSSK..', 'SKKK...', '.S.....'], 2, 19],
-  [['KAAK...', '.KAAK..', '..KAAK.', '...KKKS', '.....S.'], 9, 19]]);
+  [['.KKKK.', 'SKAAAK', '.KAAAK', 'SKKKK.'], 1, 18],
+  [['.KKKK.', 'KAAAKS', 'KAAAK.', '.KKKKS'], 9, 18]]);
 
 /* bola: pangolim enrolado. Metade de cima com fileiras de escamas em U (o mesmo motivo da armadura,
    1px de folga do contorno); a cauda escamada envolve meia volta por baixo como uma faixa, com a ponta
@@ -98,13 +98,13 @@ const PG_BALL = [
   'KAAAAKKAAKKAAAAK',
   'KAAKKAAKKAAKKAAK',
   'KKKKAAAAAAAAKKKK',
-  'KSSKAAAKKAAAKAAK',
-  'KAAKAKKAAKKAKAAK',
-  'KAKKKAAAAAAKAAAK',
-  '.KAAAKAAAAKAAAK.',
-  '.KAAAAKKKKAAKAK.',
-  '..KAAAAAKAAAAK..',
-  '...KKAAAAAAKK...',
+  'KSSKAAAKKAAAKASK',
+  'KSAKAKKAAKKAKASK',
+  'KSKKKAAAAAAKKKSK',
+  '.KSAAKAAAAKAASK.',
+  '.KSAAAKKKKAAASK.',
+  '..KSSAAAKASSSK..',
+  '...KKSSSKSSKK...',
   '.....KKKKKK.....',
 ];
 const PG_LIGHT = ['', '.....SSS', '...SSS', '..S', '..S', '.S'];
@@ -117,7 +117,8 @@ for (let i = 0; i < 4; i++) { ROWS['ball' + i] = pgLit(pgB); pgB = rot90(pgB); }
    pangoSprite troca os dois quando o sprite vira, para a bola parada ficar sempre na coluna de ball0. */
 const PG_PEEK = ['...KKKK', '..KAAAK', '.KSSKSK', 'KSSSKSK', '.KKKKKK'];
 const PG_PAW = ['..KK', '.KAAK', 'KKKKS'];
-const pgPeek = dx => compose(17, 16, [[ROWS.ball0, dx], [PG_PEEK, dx, 11], [PG_PAW, dx + 12, 13]]);
+const PG_BALL_DIM = ROWS.ball0.map((r, y) => y < 8 ? r : r.replace(/S/g, 'A'));   // sem a faixa clara perto da cabeca e da pata
+const pgPeek = dx => compose(17, 16, [[PG_BALL_DIM, dx], [PG_PEEK, dx, 11], [PG_PAW, dx + 11, 13]]);
 ROWS.ball_peek = pgPeek(0);
 ROWS.ball_peek2 = pgPeek(1);
 function pangoSprite(e, tick, px) {
