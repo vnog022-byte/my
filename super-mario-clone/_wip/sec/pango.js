@@ -22,7 +22,7 @@ const PG_ARMOR = [
   '......KSSAAAASK.',
   '.......KKKKKKK..',
 ];
-const PG_HEAD = ['....KKK.', '..KKSSSK', '.KSSKSSK', 'KSSSKSSK', '.KKKSSSK', '....KSK.'];
+const PG_HEAD = ['....KKKK', '..KKSAAK', '.KSSKSAK', 'KSSSKSSK', '.KKKSSSK', '....KSK.'];
 const PG_BELLY = ['...KSSK', '..KSSSK', '.KSKSSK', '..KKSSK', '...KSSK', '....KSK', '....KKK'];
 const PG_TAIL = ['KAAK', 'KSAK', '.KAK', '..K'];
 const PG_LEGS = {

@@ -1,9 +1,9 @@
 /* ---- Heroi grande TICO (16x32): cabeca HH/HH2 (12x7, em x=2) e paletas da secao hero.
-   Tronco de frente em 3/4 (linhas 7-17) com os bracos nas laterais, como no heroi pequeno:
+   Tronco de frente em 3/4 (linhas 7-16, calca 17-18) com os bracos nas laterais, como no heroi pequeno:
    o braco que vai para tras aparece a esquerda, o que vai para frente a direita (o de longe sombreado).
    Pernas de perfil: P/O = perna e tenis de perto, Q/N = de longe; K embaixo do tenis = sola.
    Caminhada de 8 quadros: o pe de apoio recua 2-3 px por quadro (HERO_STEP_B = 2,5 px), assim nao patina. ---- */
-/* tronco (sem bracos), linhas 7-17 */
+/* tronco (sem bracos), linhas 7-16; quadril da calca nas 17-18 */
 const HB_TORSO = [
   '...KCCLCCLCCK...',
   '....KCCCCCCK....',
@@ -48,12 +48,12 @@ const HB_LEG = [
   // 4 saida: so a ponta do pe no chao, calcanhar levantado
   ['......PPPP......', '......PPPP......', '.....PPPP.......', '.....PPP........', '....PPP.........', '....PPP.........',
    '...PPP..........', '...PPP..........', '..PPP...........', '.OOOO...........', 'KOOOOO..........', '..KKKK..........'],
-  // 5 balanco: pe sai do chao e passa por baixo do corpo, ponta para baixo
-  ['......PPPP......', '......PPPP......', '......PPPP......', '......PPP.......', '......PPP.......', '.....PPP........',
-   '....PPP.........', '...OOOO.........', '...KOOOO........', '....KKKK........', '................', '................'],
-  // 6 passagem (balanco): joelho sobe a frente, pe pendurado acima do pe de apoio
-  ['.......PPPP.....', '........PPPP....', '.........PPPP...', '.........PPPP...', '.........PPP....', '.........PPP....',
-   '........PPP.....', '........OOOO....', '........OOOOO...', '........KKKKK...', '................', '................', '................'],
+  // 5 balanco: o pe sai do chao e passa por baixo do corpo, ponta para baixo
+  ['......PPPP......', '......PPPP......', '......PPPP......', '.......PPP......', '......PPP.......', '.....PPP........',
+   '....OOOO........', '....KOOOO.......', '.....KKKK.......', '................', '................', '................'],
+  // 6 passagem (balanco): joelho sobe a frente, pe pendurado na frente do pe de apoio
+  ['.......PPPP.....', '........PPPP....', '.........PPPP...', '.........PPPP...', '..........PPP...', '..........PPP...',
+   '.........PPP....', '.........OOOO...', '.........OOOOO..', '.........KKKKK..', '................', '................', '................'],
   // 7 alcance: perna se estica a frente, pe 1 px acima do chao
   ['.......PPPP.....', '........PPPP....', '........PPPP....', '.........PPPP...', '.........PPPP...', '..........PPP...',
    '..........PPP...', '..........PPP...', '..........PPP...', '..........OOOO..', '..........OOOOO.', '..........KKKKK.', '................'],
