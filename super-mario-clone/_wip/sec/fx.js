@@ -6,7 +6,7 @@ ROWS.coin2 = ['...KK...', '..KWYK..', '..KWYK..', '..KWYK..', '..KWYK..', '..KWY
 ROWS.coin3 = ['...KK...', '..KYWK..', '.KKYYWK.', '.KKYYWK.', '.KKYYWK.', '.KKYYWK.', '.KKYYWK.', '.KKYYWK.', '.KKYYWK.', '.KKYYWK.', '.KKYYWK.', '.KKYYYK.', '..KYYK..', '...KK...'];
 PAL.coin = { K: '#503000', Y: '#f8b800', W: '#fce0a8' };
 /* bola de fogo 8x8: disco centrado em 3.5,3.5 + lingua de chama na quina (so ela gira) */
-const FB = ['......RR', '..RRRROR', '.ROOOOR.', '.ROYYOR.', '.ROYYOR.', '.ROOOOR.', '..RRRR..', '........'];
+const FB = ['......RR', '..RROOR.', '.ROOYYO.', '.ROYYYO.', '.ROOYYO.', '.RROOOR.', '..RRRR..', '........'];
 ROWS.fire0 = FB; ROWS.fire1 = rot90(FB); ROWS.fire2 = rot90(ROWS.fire1); ROWS.fire3 = rot90(ROWS.fire2);
 PAL.fire = { R: '#d82800', O: '#fca044', Y: '#fce0a8' };
 /* explosao da bola de fogo (3 ticks cada): clarao -> estouro com pontas -> 8 tufos -> 8 fiapos */
@@ -21,7 +21,7 @@ ROWS.boom3 = [
   '.......R.......', '.RR....R....RR.', '...............', '...............', '...............', '...............', '...............',
   'RR...........RR', '...............', '...............', '...............', '...............', '...............', '.RR....R....RR.', '.......R.......'];
 /* pedaco de tijolo 8x8: lasca com friso claro, junta de argamassa (K) e friso de baixo (L) */
-const DEB = ['KKKKKKK.', 'KLLLLLK.', 'KBBBBBBK', 'KKKKKBBK', '.KLLLBBK', '..KBBBBK', '...KKBBK', '.....KK.'];
+const DEB = ['KKKKKKK.', 'KLLLLLK.', 'KBBBBBBK', 'KKKKBBBK', '.KLBBBBK', '..KBBBBK', '...KKBBK', '.....KK.'];
 ROWS.deb0 = DEB; ROWS.deb1 = rot90(DEB); ROWS.deb2 = rot90(ROWS.deb1); ROWS.deb3 = rot90(ROWS.deb2);
 PAL.deb = { K: '#000000', B: '#c84c0c', L: '#fcbcb0' };
 /* poeira: sopro pequeno -> nuvem cheia -> se parte -> dois fiapos (ancorada pela base) */

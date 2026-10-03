@@ -2,18 +2,21 @@
 const SPEC_pg = o => Object.assign({ type: 'pango', state: 'walk', anim: 0, dir: -1, h: 24, x: 100, roll: 0, shellT: 0 }, o);
 const SPEC_pgAll = ['pango_a', 'pango_b', 'pango_x', 'ball0', 'ball1', 'ball2', 'ball3', 'ball_peek', 'ball_peek2'];
 
-/* LAB: padroes de escama */
+/* LAB: padroes de escama sobre a mascara da armadura */
+const PGM = ['................','........####....','......########..','.....##########.','....############','....############','...#############','...#############','...#############','...#############','...#############','...#############','....############','....############','.....###########','.....###########','.....###########','......#########.','.......#######..'];
 const PGT = {
-  p1: ['SAAK', 'AAAK', 'KKAK'.replace(/./g,(c,i)=>'AKKA'[i])],
-  p2: ['KSSK', 'AKKA'],
-  p3: ['SAAA', 'AAAA', 'KAAK', 'AKKA'],
-  p4: ['SSAK', 'SAAK', 'AAAK', 'KKKA'],
-  p5: ['ASSA', 'AAAA', 'KAAK', 'AKKA'],
+  t54: [['SSAAA', 'KAAAA', 'AKAAK', 'AAKKA'], 5, 2, 1],
+  t65: [['ASSAAA', 'SAAAAA', 'KAAAAA', 'AKAAAK', 'AAKKKA'], 6, 3, 1],
+  t65b: [['ASSAAA', 'SAAAAA', 'KAAAAA', 'AKAAAK', 'AAKKKA'], 6, 3, 3],
+  t55: [['SSAAA', 'SAAAA', 'KAAAA', 'AKAAK', 'AAKKA'], 5, 2, 0],
+  t64: [['SSAAAA', 'KAAAAA', 'AKAAAK', 'AAKKKA'], 6, 3, 1],
 };
 for (const k in PGT) {
-  const t = PGT[k], th = t.length, rows = [];
-  for (let y = 0; y < 16; y++) { let r = ''; for (let x = 0; x < 16; x++) { const band = Math.floor(y / th); const xx = (x + (band % 2) * 2) % 4; const d = Math.hypot(x - 7.5, y - 7.5); r += d > 7.6 ? '.' : d > 6.6 ? 'K' : t[y % th][xx]; } rows.push(r); }
-  ROWS['pgt_' + k] = rows;
+  const [t, pw, off, y0] = PGT[k], th = t.length;
+  const g = PGM.map((r, y) => [...r].map((c, x) => { if (c !== '#') return '.'; const band = Math.floor((y + y0) / th); return t[(y + y0) % th][((x + band * off) % pw + pw) % pw]; }));
+  for (let y = 0; y < g.length; y++) for (let x = 0; x < 16; x++) if (PGM[y][x] === '#' && [[0, 1], [0, -1], [1, 0], [-1, 0]].some(([a, b]) => !(PGM[y + b] || '')[x + a] || PGM[y + b][x + a] !== '#')) g[y][x] = 'K';
+  const arm = g.map(r => r.join(''));
+  ROWS['pgt_' + k] = compose(16, 24, [[PG_TAIL, 12, 17], [arm], [PG_HEAD, 0, 7], [PG_BELLY, 0, 12], [PG_LEGS.a, 0, 19]]);
 }
 var SPEC = {
   title: 'Pango (16x24 andando, bola 16x16) — secao pango',
@@ -21,6 +24,7 @@ var SPEC = {
   grounded: ['pango_a', 'pango_b', 'ball0', 'ball1', 'ball2', 'ball3', 'ball_peek', 'ball_peek2'],
   groups: [
     { title: 'LAB escamas', scale: 8, items: Object.keys(PGT).map(k => ['pgt_' + k, 'pango']) },
+    { title: 'LAB 3x', scale: 3, items: Object.keys(PGT).map(k => ['pgt_' + k, 'pango']) },
     { title: 'LAB 1x', scale: 1, items: Object.keys(PGT).map(k => ['pgt_' + k, 'pango']) },
     { title: 'Andando A/B e derrubado (10x)', scale: 10, items: [['pango_a', 'pango'], ['pango_b', 'pango'], ['pango_x', 'pango', false, true]] },
     { title: 'Bola: parada, girando (4), acordando (2) (10x)', scale: 10, items: ['ball0', 'ball1', 'ball2', 'ball3', 'ball_peek', 'ball_peek2'].map(k => [k, 'pango']) },

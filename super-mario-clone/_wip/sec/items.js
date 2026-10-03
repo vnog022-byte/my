@@ -1,6 +1,8 @@
 /* ---- Itens: maca (crescer), pimenta (fogo), coracao (vida), estrela (invencivel).
-   Cada paleta: contorno K + 3 cores (estilo NES). Animacao: brilho na maca, ciclo de cor "chama" na pimenta,
-   batida dupla (tum-tum) no coracao, ciclo rapido de paleta na estrela. ---- */
+   Cores: K (contorno) + 3 cores no corpo de cada sprite (luz W, base, sombra D/O na borda de baixo/direita).
+   Folha da maca e calice da pimenta usam um verde fixo como sub-paleta separada (como um tile NES de outra paleta).
+   Animacao: brilho de 4 pontas na maca, reflexo/contorno "em brasa" na pimenta (pico curto),
+   coracao tum-tum (contrai -> estoura -> volta), ciclo creme->amarelo->laranja na estrela. ---- */
 ROWS.apple = [
   '...........KKK..',
   '........K.KGGGK.',
@@ -9,44 +11,45 @@ ROWS.apple = [
   '...KKKK.KKKKK...',
   '..KRRRRKKRRRRK..',
   '.KRWWRRRRRRRRRK.',
-  'KRWWRRRRRRRRRRRK',
-  'KRWRRRRRRRRRRRRK',
-  'KRRRRRRRRRRRRRRK',
-  'KRRRRRRRRRRRRRRK',
-  'KRRRRRRRRRRRRRRK',
-  '.KRRRRRRRRRRRRK.',
-  '.KRRRRRRRRRRRRK.',
-  '..KRRRRKKRRRRK..',
-  '...KKKK..KKKK...'];
-/* quadro de brilho: o reflexo vira uma estrelinha por alguns ticks */
-ROWS.apple2 = compose(16, 16, [[ROWS.apple], [['.W.', 'WWW', '.W.'], 3, 6], [['W'], 5, 6]]);
+  'KRWWRRRRRRRRRRDK',
+  'KRWRRRRRRRRRRRDK',
+  'KRRRRRRRRRRRRRDK',
+  'KRRRRRRRRRRRRRDK',
+  'KRRRRRRRRRRRRDDK',
+  '.KRRRRRRRRRRRDK.',
+  '.KRRRRRRRRRRDDK.',
+  '..KDDDDDDDDDDK..',
+  '...KKKKKKKKKK...'];
+/* quadro de brilho: estrelinha de 4 pontas no ombro direito, separada do reflexo */
+ROWS.apple2 = compose(16, 16, [[ROWS.apple], [['.W.', 'WWW', '.W.'], 10, 6]]);
 ROWS.chili = [
   '..KK............',
   '.KGGK...........',
   '..KGK...........',
   '..KGGKK.........',
   '.KGGGGGK........',
-  '.KRGGGRRK.......',
-  '.KRWKKRRRK......',
-  '.KRWWRRRRRK.....',
-  '..KRWWRRRRRK....',
-  '...KRWRRRRRRK...',
-  '....KRRRRRRRK...',
-  '.....KKRRRRRRK..',
-  '.......KRRRRRK..',
-  '........KRRRRK..',
-  '.........KRRK...',
-  '.........KRK....'];
+  '.KGGGGGGK.......',
+  '.KKKKKKKK.......',
+  '.KRRRRRRRK......',
+  '..KRRRRWWRK.....',
+  '...KRRRRRWWK....',
+  '....KRRRRRRDK...',
+  '.....KRRRRRRDK..',
+  '......KKRRRRDK..',
+  '........KRRRDK..',
+  '.........KRDK...',
+  '..........KK....'];
+/* coracao: normal (13 de largura), contraido (11) e estouro (15), todos com a ponta no chao */
 ROWS.heart = [
   '................',
   '................',
   '................',
-  '..KKKK...KKKK...',
-  '.KRRRRK.KRRRRK..',
-  'KRWWRRRKRRRRRDK.',
-  'KRWRRRRRRRRRRDK.',
-  'KRRRRRRRRRRRRDK.',
-  'KRRRRRRRRRRRDDK.',
+  '................',
+  '................',
+  '...KKK...KKK....',
+  '..KRRRK.KRRRK...',
+  '.KRWWRRKRRRRDK..',
+  '.KRRRRRKRRRRDK..',
   '.KRRRRRRRRRRDK..',
   '..KRRRRRRRRDK...',
   '...KRRRRRRDK....',
@@ -59,51 +62,70 @@ ROWS.heart2 = [
   '................',
   '................',
   '................',
-  '...KKK...KKK....',
-  '..KRRRK.KRRRK...',
-  '.KRWWRRKRRRRDK..',
-  '.KRWRRRRRRRRDK..',
+  '................',
+  '................',
+  '................',
+  '....KK...KK.....',
+  '...KRRK.KRRK....',
+  '..KRWRRKRRRDK...',
+  '..KRRRRKRRRDK...',
+  '...KRRRRRRDK....',
+  '....KRRRRDK.....',
+  '.....KRRDK......',
+  '......KDK.......',
+  '.......K........'];
+ROWS.heart3 = [
+  '................',
+  '................',
+  '................',
+  '..KKKK...KKKK...',
+  '.KRRRRK.KRRRRK..',
+  'KRWWRRRKRRRRRDK.',
+  'KRWRRRRKRRRRRDK.',
+  'KRRRRRRRRRRRRDK.',
+  'KRRRRRRRRRRRDDK.',
   '.KRRRRRRRRRRDK..',
   '..KRRRRRRRRDK...',
   '...KRRRRRRDK....',
   '....KRRRRDK.....',
   '.....KRRDK......',
   '......KDK.......',
-  '.......K........',
-  '................'];
-ROWS.heart2 = ['................'].concat(ROWS.heart2.slice(0, 15));
+  '.......K........'];
 ROWS.star = [
   '.......KK.......',
   '......KYYK......',
   '......KWYK......',
   '.....KYWYYK.....',
-  '.KKKKKYYYYKKKKK.',
+  '....KYYYYYOK....',
+  'KKKKKYYYYYYKKKKK',
   'KYYYYYYYYYYYYYOK',
+  'KYYYYYKYYKYYYYOK',
   '.KYYYYKYYKYYYOK.',
   '..KYYYKYYKYYOK..',
-  '...KYYKYYKYOK...',
   '...KYYYYYYYOK...',
-  '..KYYYYYYYYYOK..',
   '..KYYYYKKYYYOK..',
   '.KYYYYK..KYYYOK.',
   '.KYYYK....KYYOK.',
   'KYYKK......KKYOK',
   'KKK..........KKK'];
-PAL.apple = { K: '#2c0c04', R: '#e02818', W: '#fcd8c8', G: '#48c838' };
-/* pimenta "em brasa": corpo sempre vermelho, contorno e reflexo pulsam como chama */
-PAL.chili0 = { K: '#3c0c08', R: '#d82010', W: '#fcd860', G: '#48c838' };
-PAL.chili1 = { K: '#881400', R: '#f83800', W: '#fcfcfc', G: '#80d010' };
-PAL.chili2 = { K: '#a81000', R: '#f87000', W: '#fcfcfc', G: '#b8f818' };
-PAL.chili3 = { K: '#881400', R: '#f83800', W: '#fca044', G: '#80d010' };
+PAL.apple = { K: '#2c0c04', R: '#e02818', W: '#fcd8c8', D: '#a01008', G: '#48c838' };
+/* pimenta "em brasa": corpo, sombra e verde fixos; so o reflexo W e o contorno K esquentam */
+const CHILI = { K: '#3c0c08', R: '#d82010', W: '#f89048', D: '#881008', G: '#48c838' };
+PAL.chili0 = CHILI;
+PAL.chili1 = { ...CHILI, K: '#5c1008', W: '#fcd860' };
+PAL.chili2 = { ...CHILI, K: '#7c1404', W: '#fcfcfc' };
 PAL.heart = { K: '#3c0c20', R: '#f83878', W: '#fcd0e0', D: '#a8105c' };
 PAL.star0 = { K: '#5c3800', Y: '#f8d838', O: '#d88000', W: '#fcfcfc' };
-PAL.star1 = { K: '#5c3800', Y: '#fcfcb0', O: '#f8d838', W: '#fcfcfc' };
-PAL.star2 = { K: '#682000', Y: '#f89820', O: '#c84c0c', W: '#fcfc90' };
-PAL.star3 = { K: '#004800', Y: '#b8f818', O: '#58a800', W: '#fcfcfc' };
-const HEART_BEAT = [1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+PAL.star1 = { K: '#5c3800', Y: '#fcf0a0', O: '#f8c838', W: '#fcfcfc' };
+PAL.star2 = { K: '#683000', Y: '#f8a830', O: '#c86410', W: '#fcfcb0' };
+PAL.star3 = { K: '#5c3800', Y: '#fcfcf0', O: '#f8e070', W: '#fcfcfc' };
+const CHILI_PULSE = [0, 0, 1, 2, 1, 0, 0, 0];
+/* tum-tum: contrai (2) -> estoura (3) -> volta (1), duas vezes, depois descanso */
+const HEART_BEAT = [2, 3, 1, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+const STAR_CYCLE = [3, 1, 0, 2, 0, 1];
 function itemSprite(it, tick) {
   if (it.type === 'grow') return { id: tick % 64 < 6 ? 'apple2' : 'apple', pal: 'apple' };
-  if (it.type === 'fire') return { id: 'chili', pal: 'chili' + Math.floor(tick / 4) % 4 };
-  if (it.type === 'life') return { id: HEART_BEAT[Math.floor(tick / 3) % 16] ? 'heart2' : 'heart', pal: 'heart' };
-  return { id: 'star', pal: 'star' + Math.floor(tick / 3) % 4 };
+  if (it.type === 'fire') return { id: 'chili', pal: 'chili' + CHILI_PULSE[Math.floor(tick / 3) % 8] };
+  if (it.type === 'life') { const b = HEART_BEAT[Math.floor(tick / 3) % 14]; return { id: b === 1 ? 'heart' : 'heart' + b, pal: 'heart' }; }
+  return { id: 'star', pal: 'star' + STAR_CYCLE[Math.floor(tick / 3) % 6] };
 }
