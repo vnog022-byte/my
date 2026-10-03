@@ -588,7 +588,7 @@ for (let i = 0; i < 4; i++) ROWS['ball' + i] = ballRows(-i * Math.PI / 12);
 ROWS.ball_peek = ballRows(0, true);
 PAL.pango = { K: '#3a200c', A: '#c87830', H: '#f0b860', M: '#8c4c18', S: '#f8d0a8', T: '#d8a078', E: '#1c1828', W: '#fcfcfc' };
 function pangoSprite(e, tick, px) {
-  if (e.state === 'dead') return { id: e.h === 24 ? 'pango_a' : 'ball0', pal: 'pango', flip: e.dir > 0, vflip: true };
+  if (e.state === 'dead') return { id: e.shell ? 'ball0' : 'pango_a', pal: 'pango', flip: e.dir > 0, vflip: true };
   if (e.state === 'walk') return { id: ['pango_a', 'pango_b', 'pango_c', 'pango_b'][Math.floor(e.anim / 8) % 4], pal: 'pango', flip: e.dir > 0 };
   if (e.state === 'shellmove') return { id: 'ball' + (((Math.floor(e.roll / 6) % 4) + 4) % 4), pal: 'pango' };
   return { id: e.shellT % 150 > 105 ? 'ball_peek' : 'ball0', pal: 'pango', flip: px > e.x };
@@ -928,7 +928,7 @@ function buildLevel() {
   G.flagY = 52;
 }
 function mkEnemy(type, tx) {
-  const h = type === 'pango' ? 24 : 16;
+  const h = 16;  /* o pango anda baixo (corpo de tatu): hitbox de 16 px, o quadro de 24 e desenhado pela base */
   return { type, x: tx * T + 1, y: 13 * T - h, w: 14, h, vx: 0, vy: 0, dir: -1, state: 'walk', active: false, anim: 0, t: 0, kickT: 0,
            seed: (tx * 37) % 140, roll: 0, shellT: 0 };
 }
@@ -1191,7 +1191,7 @@ function updateEntities() {
       if (p.chain >= 10) oneUp(e.x, e.y); else addScore(pts, e.x, e.y);
       p.chain++; sfx.stomp(); burst(e.x + e.w / 2, e.y);
       if (e.type === 'blob') { e.state = 'squish'; e.t = 30; e.vx = 0; goo(e.x + e.w / 2, e.y + e.h - 3); }
-      else if (e.state === 'walk') { e.state = 'shell'; e.y += 8; e.h = 16; e.vx = 0; e.shellT = 0; }
+      else if (e.state === 'walk') { e.state = 'shell'; e.shell = true; e.vx = 0; e.shellT = 0; }
       else if (e.state === 'shell') { e.state = 'shellmove'; e.dir = (p.x + p.w / 2 < e.x + e.w / 2) ? 1 : -1; e.kickT = 12; }
       else if (e.state === 'shellmove') { e.state = 'shell'; e.shellT = 0; }
     } else if (e.type === 'pango' && e.state === 'shell') {
@@ -1286,8 +1286,9 @@ function drawTiles() {
   }
 }
 function drawEnemy(e) {
-  const f = enemySprite(e, G.tick, p.x);
-  drawSpr(f.id, f.pal, e.x - 1 - (f.ox || 0), e.y, f.flip, f.vflip);
+  const f = enemySprite(e, G.tick, p.x), im = spr(f.id, f.pal, f.flip, f.vflip);
+  /* alinhado pela base da hitbox: quadros mais altos que ela (pango andando) sobem acima de e.y */
+  ctx.drawImage(im, Math.round(e.x - 1 - (f.ox || 0) - camX), Math.round(e.y + e.h - im.height));
 }
 function drawPlayer() {
   if (p.state === 'bonus') return;

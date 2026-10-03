@@ -117,7 +117,7 @@ const pgPeek = dx => compose(20, 16, [[ROWS.ball0, dx], [PG_PEEK, dx - 3, 8], [P
 ROWS.ball_peek = pgPeek(3);
 ROWS.ball_peek2 = pgPeek(4);
 function pangoSprite(e, tick, px) {
-  if (e.state === 'dead') return { id: e.h === 24 ? 'pango_x' : 'ball0', pal: 'pango', flip: e.dir > 0, vflip: true };
+  if (e.state === 'dead') return { id: e.shell ? 'ball0' : 'pango_x', pal: 'pango', flip: e.dir > 0, vflip: true };
   if (e.state === 'walk') return { id: PG_WALK[Math.floor(e.anim / 4) % 4], pal: 'pango', flip: e.dir > 0 };
   if (e.state === 'shellmove') return { id: 'ball' + (((Math.floor(e.roll / 6) % 4) + 4) % 4), pal: 'pango' };
   const t = e.shellT % 150, flip = px > e.x;
