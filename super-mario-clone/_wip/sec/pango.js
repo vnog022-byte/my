@@ -28,7 +28,7 @@ const PG_ARMOR = [
 /* cabeca baixa na frente do corcunda: bone de escamas que cai como palpebra pesada sobre o olho de 2px,
    focinho comprido para a frente/baixo com nariz escuro 2x2, queixo em K */
 const PG_HEAD = ['....KKKK.', '...KAAAAK', '..KAAKAAK', '.KSSSKSSK', 'KKSSSSSSK', 'KKSSSSSK.', '.KKKKKK..'];
-const PG_BELLY = ['..KSSK', '..KSSSK', '...KSSK'];
+const PG_BELLY = ['..KSSK', '..KSSSK', '...KKK'];
 const PG_TAIL = ['...KK', '..KSK', '.KKAK', '.KSAK', '.KAAK', '.KKAK', '..KAK', '..KKK'];
 const PG_FRONT = ['..KSSSK', '.KSSSK', '.KSSSK', 'KSSSSK', 'SKSKKK'];
 const PG_BACK = ['.KAAAK', '.KAAAK', '.KAAAK', 'KAAAAK', 'SKSKKK'];
@@ -39,10 +39,10 @@ ROWS.pango_a = pgWalk(0, 0, [PG_BACK, 6, 19], [PG_FRONT, 0, 19]);
 ROWS.pango_b = pgWalk(1, 2, [PG_BACK.slice(1), 0, 20], [PG_FRONT.slice(1), 6, 20]);
 ROWS.pango_c = ROWS.pango_a;
 /* derrubado (de pe aqui; o jogo vira de ponta-cabeca): olho em X, boca aberta, barriga grande, patas duras */
-ROWS.pango_x = compose(16, 24, [[PG_ARMOR], [PG_TAIL, 10, 11],
-  [['..KSSSSK', '.KSSSSSK', 'KSSSSSSK', 'KSSSSSK.', '.KSSSK..', '..KKK...'], 0, 13],
-  [['....KKKK.', '...KSSSSK', '..KSKSKSK', '.KSSSKSSK', 'KKSSKSKSK', 'KKKKSSSK.', '..KSKKK..'], 0, 7],
-  [['.KAAK', '.KAAK', '.KAAK', '.KAAK', 'SKSKS'], 8, 19], [['.KSSK', '.KSSK', '.KSSK', '.KSSK', 'SKSKS'], 2, 19]]);
+ROWS.pango_x = compose(16, 24, [[PG_TAIL, 11, 15], [PG_ARMOR],
+  [['.KSSSSK', 'KSSSSSK', 'KSSSSSK', '.KKKKK.'], 1, 15],
+  [['....KKKK.', '...KSSSSK', '..KSKSKSK', '.KSSSKSSK', 'KKSSKSKSK', 'KKSSSSSK.', '.KKSKKK..'], 0, 9],
+  [['.KAAK', '.KAAK', '.KAAK', 'KAAAK', 'SKSKS'], 7, 19], [['.KSSK', '.KSSK', '.KSSK', 'KSSSK', 'SKSKS'], 1, 19]]);
 
 /* bola: pangolim enrolado. Contorno limpo, faixa externa de escamas (marcas a 1px da borda), anel interno
    e a ponta clara da cauda como marca assimetrica que da a volta nos 4 quadros (rot90 = sentido horario,
@@ -51,26 +51,26 @@ const PG_BALL = [
   '.....KKKKKK.....',
   '...KKAAAAAAKK...',
   '..KAAAAKAAAAAK..',
-  '.KAAKAAKAAAKAAK.',
   '.KAAAKKKKKKAAAK.',
-  'KAAAKAAAAAAKAAAK',
-  'KAKKAAAAAAAAKKAK',
-  'KAAKAAKKKKAAKAAK',
-  'KAAKAKSSSAKAKAAK',
-  'KAAKAKSKKAKAKAAK',
-  'KKSKKAAAAAAKKAAK',
-  'KSSSKKAAAAKKKAAK',
-  '.KSKAAKKKKAAAKK.',
-  '.KKAAKAAAAKAAAK.',
-  '..KKKAAAAAAAKK..',
-  '...KKKKKKKKKK...',
+  '.KAAKAAAAAAKAAK.',
+  'KAAKAAAAAAAAKAAK',
+  'KAKKAAAKKAAAKKAK',
+  'KAAKAAKAAKAAKAAK',
+  'KAAKAAAAAKAAKAAK',
+  'KKAKAAAKKAAAKAAK',
+  'KSSKAAAAAAAAKAAK',
+  '.KSSKAAAAAAKKAK.',
+  '.KAKAKKKKKKAAAK.',
+  '..KAAAAAKAAAAK..',
+  '...KKAAAAAAKK...',
+  '.....KKKKKK.....',
 ];
 const PG_LIGHT = ['', '.....SSS', '...SS', '..S', '.S', '.S'];
 const pgLit = rows => rows.map((r, y) => r.replace(/./g, (ch, x) => ch === 'A' && (PG_LIGHT[y] || '')[x] === 'S' ? 'S' : ch));
 let pgB = PG_BALL;
 for (let i = 0; i < 4; i++) { ROWS['ball' + i] = pgLit(pgB); pgB = rot90(pgB); }
 /* acordando: focinho espiando sob meia palpebra, garras para fora, e a bola tremendo 1px */
-const PG_PEEK = ['..KKKK', '.KKKKA', 'KSSKSA', 'KKSSSK', '.KKKK.'];
+const PG_PEEK = ['...KKK', '..KAAK', '.KSSKS', 'KKSSSS', 'KKKKKK'];
 const PG_CLAW = ['KSK', 'SKS'];
 const pgShift = rows => rows.map(r => '.' + r.slice(0, 15)).map((r, y) => y >= 5 && y <= 10 ? r.slice(0, 15) + 'K' : r);
 ROWS.ball_peek = compose(16, 16, [[ROWS.ball0], [PG_PEEK, 0, 7], [PG_CLAW, 3, 14], [PG_CLAW, 10, 14]]);
