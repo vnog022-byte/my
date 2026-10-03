@@ -21,7 +21,7 @@ ROWS.apple = [
   '..KDDDDDDDDDDK..',
   '...KKKKKKKKKK...'];
 /* quadro de brilho: cintilacao alongada (vertical 5px, horizontal 3px) cruzando o contorno do ombro direito */
-ROWS.apple2 = compose(16, 16, [[ROWS.apple], [['.W.', '.W.', 'WWW', '.W.', '.W.'], 13, 4]]);
+ROWS.apple2 = compose(16, 16, [[ROWS.apple], [['.S.', '.S.', 'SSS', '.S.', '.S.'], 13, 4]]);
 ROWS.chili = [
   '..KK............',
   '.KGGK...........',
@@ -35,10 +35,10 @@ ROWS.chili = [
   '....KRRRRRRWK...',
   '.....KDRRRRRRK..',
   '......KDRRRRRK..',
-  '.......KDRRRRK..',
-  '........KDRRRK..',
-  '.........KDDK...',
-  '..........KK....'];
+  '.......KDRRRK...',
+  '........KDRRK...',
+  '........KDRK....',
+  '........KKK.....'];
 /* coracao: normal (13 de largura), contraido (11) e estouro (15), todos com a ponta no chao */
 ROWS.heart = [
   '................',
@@ -98,17 +98,17 @@ ROWS.star = [
   '.....KYYYYK.....',
   '.KKKKYYYYYYKKKK.',
   'KYYYYYYYYYYYYYOK',
-  '.KKYYYKYYKYYOKK.',
-  '...KYYKYYKYOK...',
+  '.KYYYYKYYKYYYOK.',
+  '..KYYYKYYKYYOK..',
   '...KYYKYYKYOK...',
   '...KYYYYYYYOK...',
   '..KYYYYYYYYYOK..',
   '..KYYYYKKYYYOK..',
-  '.KYYYYK..KYYYOK.',
-  '.KYYYK....KYYOK.',
-  'KYYKK......KKYOK',
-  'KKK..........KKK'];
-PAL.apple = { K: '#2c0c04', R: '#e02818', W: '#fcd8c8', D: '#a01008', G: '#48c838' };
+  '.KYYYKK..KKYYOK.',
+  '.KYYK......KYOK.',
+  'KYKK........KKOK',
+  'KK............KK'];
+PAL.apple = { K: '#2c0c04', R: '#e02818', W: '#fcd8c8', D: '#a01008', G: '#48c838', S: '#fcfcfc' };
 /* pimenta "em brasa": corpo, sombra e verde fixos; so o reflexo W e o contorno K esquentam */
 const CHILI = { K: '#3c0c08', R: '#d82010', W: '#fc9c80', D: '#881008', G: '#48c838' };
 PAL.chili0 = CHILI;

@@ -599,7 +599,7 @@ function dust(x, y, n = 1, dir = 0) {
 }
 function sparkle(x, y, col) { parts.push({ k: 'spark', x, y, vx: 0, vy: -0.15, t: 0, life: 16, col }); }
 function goo(x, y) {
-  for (let i = 0; i < 8; i++) { const a = Math.PI + Math.random() * Math.PI; parts.push({ k: 'goo', x, y, vx: Math.cos(a) * rnd(0.6, 1.6), vy: Math.sin(a) * rnd(1, 2.5), g: 0.2, t: 0, gy: y + 3, life: 26, col: i % 2 ? '#a048d8' : '#d8a0f8' }); }
+  for (let i = 0; i < 8; i++) { const a = Math.PI + Math.random() * Math.PI; parts.push({ k: 'goo', x, y, vx: Math.cos(a) * rnd(0.6, 1.6), vy: Math.sin(a) * rnd(1, 2.5), g: 0.2, t: 0, gy: y + 3, life: 26, col: i % 2 ? PAL.blob.B : PAL.blob.L }); }
 }
 const burst = (x, y) => parts.push({ k: 'burst', x, y, vx: 0, vy: 0, t: 0, life: 10 });
 const poof = (x, y) => parts.push({ k: 'ring', x, y, vx: 0, vy: 0, t: 0, life: 12, col: '#f88818' });
