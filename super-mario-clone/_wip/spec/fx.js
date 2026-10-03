@@ -22,12 +22,14 @@ var SPEC = {
   groups: [
     { title: 'Moeda girando (10x)', scale: 10, items: SPEC_ids('coin').map(k => [k, 'coin']) },
     { title: 'Bola de fogo e pedaco de tijolo (10x)', scale: 10, items: SPEC_ids('fire').map(k => [k, 'fire']).concat(SPEC_ids('deb').map(k => [k, 'deb'])) },
+    { title: 'Explosao da bola de fogo (8x)', scale: 8, items: SPEC_ids('boom').map(k => [k, 'fire']) },
+    { title: 'Poeira, brilho e impacto (8x)', scale: 8, items: SPEC_ids('dust').map(k => [k, 'dust']).concat(SPEC_ids('spark').map(k => [k, fxPal('#fcd848')]), SPEC_ids('pow').map(k => [k, 'pow'])) },
   ],
   strips: [
     { title: 'Moeda saltando do bloco: um quadro por tick (3x)', n: 16, cw: 14, ch: 22, scale: 3, frame: i => ({ id: coinSprite(i), pal: 'coin', dy: -4, label: coinSprite(i) }) },
     { title: 'Bola de fogo indo para a direita: um quadro por tick (4x)', n: 12, cw: 14, ch: 14, scale: 4, frame: i => ({ id: fireSprite({ t: i, vx: 1 }), pal: 'fire', dy: -3, label: fireSprite({ t: i, vx: 1 }) }) },
     { title: 'Pedaco de tijolo girando: um quadro por tick (4x)', n: 12, cw: 14, ch: 14, scale: 4, frame: i => ({ id: debSprite({ t: i, vx: 1 }), pal: 'deb', dy: -3, label: debSprite({ t: i, vx: 1 }) }) },
-    { title: 'Poeira (vida 16 ticks): a cada 2 ticks', n: 8, cw: 26, ch: 24, scale: 3, frame: i => SPEC_cell([SPEC_part('dust', i * 2, 16)], 'dust t=' + i * 2) },
+    { title: 'Poeira (vida 16 ticks, subindo devagar): um quadro por tick', n: 16, cw: 26, ch: 24, scale: 3, frame: i => SPEC_cell([SPEC_part('dust', i, 16, { x: 13 + i * 0.3, y: 20 - i * 0.35 })], 'dust t=' + i) },
     { title: 'Brilho (vida 16 ticks): a cada 2 ticks', n: 8, cw: 26, ch: 24, scale: 3, frame: i => SPEC_cell([SPEC_part('spark', i * 2, 16, { col: '#fcd848' })], 'spark t=' + i * 2) },
     { title: 'Impacto ao pisar (vida 10 ticks)', n: 10, cw: 26, ch: 24, scale: 3, frame: i => SPEC_cell([SPEC_part('burst', i, 10)], 'burst t=' + i) },
     { title: 'Estouro da bola de fogo (vida 12 ticks)', n: 12, cw: 26, ch: 24, scale: 3, frame: i => SPEC_cell([SPEC_part('ring', i, 12, { col: '#f88818' })], 'ring t=' + i) },

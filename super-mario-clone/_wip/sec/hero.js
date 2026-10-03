@@ -1,54 +1,146 @@
 /* ---- Heroi pequeno (16x16), cabeca e paletas compartilhadas, e escolha de quadro do heroi.
    K=contorno C=moletom L=borda M=moletom escuro S=pele T=pele escura B=bochecha E=olho P/Q=calca O/N=tenis
-   Caminhada classica: contato (pernas em V, corpo 1 px abaixo) e passagem (perna de apoio reta, a outra
-   passando com o pe levantado), alternando as pernas. Pernas sem contorno interno. ---- */
+   Cada quadro = cabeca HH (12x7, em x=2, desce 1 px nos quadros de contato) + bloco de baixo escrito inteiro
+   (tronco, quadril, pernas e tenis), para controlar cada pixel das pernas.
+   Caminhada em 4 quadros: contato A (pernas em V), passagem A (perna de apoio reta embaixo do corpo,
+   a outra dobrada passando com o pe no ar), contato B e passagem B (pernas trocadas).
+   O pe de apoio anda 4-5 px para tras por quadro = HERO_STEP_S, entao nao patina. ---- */
 const HH = [
-  '.K......K...', 'KCK....KCK..', 'KCCKKKKKCCK.', 'KCCCLLLLLCCK',
-  'KCCLSSSSESLK', 'KCCLSSSBESSK', '.KCCLLLLLLK.'];
+  '.K......K...',
+  'KCK....KCK..',
+  'KCCKKKKKCCK.',
+  'KCCCLLLLLLCK',
+  'KCCLSSSSESSK',
+  'KCCLSSSSESSK',
+  '.KCLSSSBSSK.'];
 const HH2 = ['.K..........', 'KCK.....KKK.', 'KCCKKKKKCCCK'].concat(HH.slice(3));
 const HF = [
-  '...K........K...', '..KCK......KCK..', '..KCCKKKKKKCCK..', '.KCCLLLLLLLLCCK.',
-  '.KCLSESSSSESLCK.', '.KCLSSSKKSSSLCK.', '..KCLLLLLLLLCK..'];
-const ST = {
-  stand: ['...KCCCCCCCCK...', '...SKCCCCCCKS...', '....KLLLLLLK....'],
-  plain: ['...KCCCCCCCCK...', '...KCCCCCCCCK...', '....KLLLLLLK....'],
-  swA:   ['...KCCCCCCCCK...', '..SKCCCCCCCCKT..', '....KLLLLLLK....'],
-  swB:   ['...KCCCCCCCCK...', '..TKCCCCCCCCKS..', '....KLLLLLLK....'],
-  jump:  ['...KCCCCCCCCK...', '..TKCCCCCCCCK...', '....KLLLLLLK....'],
-  skid:  ['....KCCCCCCCCK..', '...TKCCCCCCCCKS.', '.....KLLLLLLK...'],
-  climb1:['...KCCCCCCCCKS..', '...KCCCCCCCCK...', '....KLLLLLLKS...'],
-  climb2:['...KCCCCCCCCK...', '...KCCCCCCCCKS..', '....KLLLLLLK.S..'],
-  die:   ['S..KCCCCCCCCK..S', '.SKCCCCCCCCCCKS.', '...KLLLLLLLLK...'],
+  '...K........K...',
+  '..KCK......KCK..',
+  '..KCCKKKKKKCCK..',
+  '.KCCLLLLLLLLCCK.',
+  '.KCLSESSSSESLCK.',
+  '.KCLBSSKKSSBLCK.',
+  '..KCLLLLLLLLCK..'];
+/* blocos de baixo: comecam na linha 7+dy da cabeca e vao ate a linha 15 */
+const LO = {
+  stand: [
+    '...KCCCCCCCCK...',
+    '...SKCCCCCCKS...',
+    '....KLLLLLLK....',
+    '....KPPPPPPK....',
+    '.....QQ..PP.....',
+    '.....QQ..PP.....',
+    '.....QQ..PP.....',
+    '.....NN..OO.....',
+    '.....NNN.OOOO...'],
+  cA: [ // contato: perna de perto (P) na frente, de longe (Q) atras; corpo 1 px abaixo
+    '...KCCCCCCCCK...',
+    '..SKCCCCCCCCKT..',
+    '....KLLLLLLK....',
+    '....KPPPPPPK....',
+    '....QQ....PP....',
+    '...QQ......PP...',
+    '..NN.......OO...',
+    '..NNNN.....OOOO.'],
+  pA: [ // passagem: P reta embaixo do corpo, Q dobrada com o pe no ar
+    '...KCCCCCCCCK...',
+    '...SKCCCCCCKT...',
+    '....KLLLLLLK....',
+    '....KPPPPPPK....',
+    '......PPQQ......',
+    '......PP.QQ.....',
+    '......PP.NN.....',
+    '......OO.NNNN...',
+    '......OOOO......'],
+  jump: [
+    '...KCCCCCCCCK...',
+    '..TKCCCCCCCCK...',
+    '....KLLLLLLK....',
+    '....KPPPPPPK....',
+    '....QQ..PPPP....',
+    '...QQ.....PP....',
+    '...QQ.....OOOO..',
+    '..NN............',
+    '..NNN...........'],
+  fall: [
+    '...KCCCCCCCCK...',
+    '...KCCCCCCCCK...',
+    '....KLLLLLLK....',
+    '....KPPPPPPK....',
+    '....QQ...PP.....',
+    '...QQ.....PP....',
+    '...QQ.....PP....',
+    '...NN.....OO....',
+    '..NNN.....OOO...'],
+  skid: [
+    '....KCCCCCCCCK..',
+    '...TKCCCCCCCCKS.',
+    '.....KLLLLLLK...',
+    '.....KPPPPPPK...',
+    '.....PP..QQ.....',
+    '....PP..QQ......',
+    '...PP...QQ......',
+    '..OO....NN......',
+    '.OOOO...NNNN....'],
+  land: [ // dy=2
+    '...KCCCCCCCCK...',
+    '..SKCCCCCCCCKS..',
+    '....KLLLLLLK....',
+    '...KPPPPPPPPK...',
+    '...QQ.....PP....',
+    '..NN.......OO...',
+    '..NNN......OOOO.'],
+  climb1: [
+    '...KCCCCCCCCKS..',
+    '...KCCCCCCCCK...',
+    '....KLLLLLLKS...',
+    '....KPPPPPPK....',
+    '.....QQPPPPP....',
+    '.....QQ....PP...',
+    '.....QQ....OOO..',
+    '.....NN.........',
+    '.....NNN........'],
+  climb2: [
+    '...KCCCCCCCCK...',
+    '...KCCCCCCCCKS..',
+    '....KLLLLLLK.S..',
+    '....KPPPPPPK....',
+    '.....PPQQQQQ....',
+    '.....PP....QQ...',
+    '.....PP....NNN..',
+    '.....OO.........',
+    '.....OOO........'],
+  die: [
+    'S..KCCCCCCCCK..S',
+    '.SKCCCCCCCCCCKS.',
+    '...KLLLLLLLLK...',
+    '....KPPPPPPK....',
+    '.....PP..PP.....',
+    '.....PP..PP.....',
+    '.....PP..PP.....',
+    '.....OO..OO.....',
+    '....OOO..OOO....'],
 };
-/* quadril + pernas + tenis (6 linhas na altura normal, 5 quando o corpo desce 1 px) */
-const SL = {
-  stand: ['....KPPPPPPK....', '.....QQ..PP.....', '.....QQ..PP.....', '.....QQ..PP.....', '.....QQ..PP.....', '.....NNN.OOO....'],
-  cA:    ['....KPPPPPPK....', '.....QQ..PP.....', '....QQ....PP....', '...QQ......PP...', '..NNN......OOO..'],
-  pA:    ['....KPPPPPPK....', '......QQPP......', '......QQPP......', '.....QQ.PP......', '....NNN.PP......', '........OOO.....'],
-  jump:  ['....KPPPPPPK....', '.....QQPPPP.....', '.....QQ...PP....', '....QQ....PP....', '....QQ....OOO...', '...NNN..........'],
-  fall:  ['....KPPPPPPK....', '.....QQ..PP.....', '.....QQ..PP.....', '....QQ....PP....', '....QQ....PP....', '...NNN....OOO...'],
-  skid:  ['.....KPPPPPPK...', '.....QQ.PP......', '....QQ.PP.......', '...QQ.PP........', '..QQ.PP.........', '.NNNOOO.........'],
-  land:  ['...KPPPPPPPPK...', '...QQ......PP...', '..QQ........PP..', '..NNN......OOO..'],
-  climb1:['....KPPPPPPK....', '.....QQPPPP.....', '.....QQ...PP....', '.....QQ...OOOO..', '.....QQ.........', '....NNN.........'],
-  die:   ['....KPPPPPPK....', '.....PP..PP.....', '.....PP..PP.....', '.....PP..PP.....', '.....PP..PP.....', '....OOO..OOO....'],
-};
-SL.cB = swapLegs(SL.cA); SL.pB = swapLegs(SL.pA); SL.climb2 = swapLegs(SL.climb1);
+const swapArms = rows => recolor(rows, { S: 'T', T: 'S' });
+LO.cB = swapArms(swapLegs(LO.cA)); LO.pB = swapArms(swapLegs(LO.pA));
 const ARM_UP_R = [['..S', '..S', '.CK', 'C..'], 12, 4], ARM_UP_L = [['S...', 'S...', '.C..', '..CC'], 0, 4];
-const small = (head, hx, torso, legs, dy = 0, extra = []) => compose(16, 16, [[head, hx, dy], [torso, 0, 7 + dy], [legs, 0, 16 - legs.length], ...extra]);
-ROWS.h_stand = small(HH, 2, ST.stand, SL.stand);
-ROWS.h_stand2 = small(HH2, 2, ST.stand, SL.stand);
-ROWS.h_w1 = small(HH, 2, ST.swA, SL.cA, 1);
-ROWS.h_w2 = small(HH, 2, ST.stand, SL.pA);
-ROWS.h_w3 = small(HH, 2, ST.swB, SL.cB, 1);
-ROWS.h_w4 = small(HH, 2, ST.stand, SL.pB);
-ROWS.h_jump = small(HH, 2, ST.jump, SL.jump, 0, [ARM_UP_R]);
-ROWS.h_fall = small(HH, 2, ST.plain, SL.fall, 0, [ARM_UP_L, ARM_UP_R]);
-ROWS.h_skid = small(HH, 3, ST.skid, SL.skid);
-ROWS.h_land = small(HH, 2, ST.stand, SL.land, 2);
-ROWS.h_climb1 = small(HH, 2, ST.climb1, SL.climb1);
-ROWS.h_climb2 = small(HH, 2, ST.climb2, SL.climb2);
-ROWS.h_die1 = compose(16, 16, [[HF], [ST.die, 0, 7], [SL.die, 0, 10]]);
-ROWS.h_die2 = compose(16, 16, [[HF], [['S..............S', 'S..............S', 'C..............C', '.C............C.', '..CC........CC..'], 0, 3], [ST.plain, 0, 7], [SL.die, 0, 10]]);
+const small = (head, hx, lo, dy = 0, extra = []) => compose(16, 16, [[head, hx, dy], [lo, 0, 7 + dy], ...extra]);
+ROWS.h_stand = small(HH, 2, LO.stand);
+ROWS.h_stand2 = small(HH2, 2, LO.stand);
+ROWS.h_w1 = small(HH, 2, LO.cA, 1);
+ROWS.h_w2 = small(HH, 2, LO.pA);
+ROWS.h_w3 = small(HH, 2, LO.cB, 1);
+ROWS.h_w4 = small(HH, 2, LO.pB);
+ROWS.h_jump = small(HH, 2, LO.jump, 0, [ARM_UP_R]);
+ROWS.h_fall = small(HH, 2, LO.fall, 0, [ARM_UP_L, ARM_UP_R]);
+ROWS.h_skid = small(HH, 3, LO.skid);
+ROWS.h_land = small(HH, 2, LO.land, 2);
+ROWS.h_climb1 = small(HH, 2, LO.climb1);
+ROWS.h_climb2 = small(HH, 2, LO.climb2);
+ROWS.h_die1 = compose(16, 16, [[HF], [LO.die, 0, 7]]);
+ROWS.h_die2 = compose(16, 16, [[HF], [['S..............S', 'S..............S', 'C..............C', '.C............C.', '..CC........CC..'], 0, 3], [LO.die.slice(0, 1).map(() => '...KCCCCCCCCK...').concat(LO.die.slice(1).map((r, i) => i === 0 ? '...KCCCCCCCCK...' : r)), 0, 7]]);
+for (const k in ROWS) if (k.startsWith('h_') && (ROWS[k].length !== 16 || ROWS[k].some(r => r.length !== 16))) throw new Error('tamanho errado ' + k);
 
 const HERO = { K: '#1c1828', C: '#20a08c', L: '#9cf0d8', M: '#127060', S: '#fcc8a0', T: '#d89878', B: '#f87860', E: '#1c1828', P: '#3c4ca8', Q: '#283070', O: '#f87818', N: '#b84808' };
 PAL.hero = HERO;
