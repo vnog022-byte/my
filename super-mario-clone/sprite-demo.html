@@ -607,13 +607,17 @@ const PG_PAW = ['.KKK', 'KAAK', 'KKKS'];
 const pgPeek = dx => compose(20, 16, [[ROWS.ball0, dx], [PG_PEEK, dx - 3, 8], [PG_PAW, dx + 12, 13]]);
 ROWS.ball_peek = pgPeek(3);
 ROWS.ball_peek2 = pgPeek(4);
+const PANGO_UNROLL = 330;  // ticks enrolado ate se desenrolar sozinho (o jogo usa em unroll())
 function pangoSprite(e, tick, px) {
   if (e.state === 'dead') return { id: e.shell ? 'ball0' : 'pango_x', pal: 'pango', flip: e.dir > 0, vflip: true };
   if (e.state === 'walk') return { id: PG_WALK[Math.floor(e.anim / 7) % 4], pal: 'pango', flip: e.dir > 0 };
   if (e.state === 'shellmove') return { id: 'ball' + (((Math.floor(e.roll / 6) % 4) + 4) % 4), pal: 'pango' };
-  const t = e.shellT % 150, flip = px > e.x;
-  if (t <= 105) return { id: 'ball0', pal: 'pango', flip };
-  const shake = Math.floor(t / 3) % 2 === 1;                 // virado, ball_peek2 e o quadro "parado"
+  /* enrolado: quieto, espia de vez em quando e, perto de PANGO_UNROLL, espia direto tremendo cada vez mais rapido */
+  const T0 = e.shellT, flip = px > e.x, warn = T0 >= PANGO_UNROLL - 90;
+  const t = T0 % 150;
+  if (!warn && (T0 < 60 || t <= 105)) return { id: 'ball0', pal: 'pango', flip };
+  const per = !warn ? 3 : T0 >= PANGO_UNROLL - 30 ? 1 : 2;
+  const shake = Math.floor(T0 / per) % 2 === 1;              // virado, ball_peek2 e o quadro "parado"
   return { id: shake !== flip ? 'ball_peek2' : 'ball_peek', pal: 'pango', flip, ox: flip ? 0 : 3 };
 }
 /* END:pango */

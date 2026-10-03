@@ -84,6 +84,13 @@
         for (let i = 0; i < 10; i++) { step(3); grab(pangoSprite(e, G.tick, p.x).id, e.x - 13, e.y - 6, 42, 32); }
         row('pisado: vira bola e, parada, espia'); begin(); e = firstOf('pango'); stompOn(e); grab('pisado', e.x - 13, 13 * T - 36, 42, 38); park();
         for (const s of [30, 100, 108, 118, 128, 140]) { e.shellT = s; grab(pangoSprite(e, G.tick, p.x).id + ' t=' + s, e.x - 13, 13 * T - 36, 42, 38); }
+        row('desenrola sozinho: aviso tremendo, pulinho e volta a andar'); begin(); e = firstOf('pango'); stompOn(e); park();
+        p.x = e.x - 60;
+        for (const s of [PANGO_UNROLL - 120, PANGO_UNROLL - 80, PANGO_UNROLL - 40, PANGO_UNROLL - 20, PANGO_UNROLL - 2]) {
+          while (e.shellT < s) step(1);
+          grab(pangoSprite(e, G.tick, p.x).id + ' t=' + s, e.x - 13, 13 * T - 36, 42, 38);
+        }
+        step(2); for (let i = 0; i < 5; i++) { grab(e.state + ' ' + pangoSprite(e, G.tick, p.x).id, e.x - 13, 13 * T - 36, 42, 38); step(5); }
         row('chutado: bola rolando (um quadro por tick)'); begin(); e = firstOf('pango'); stompOn(e); park(); updatePlayer = realUP;
         p.x = e.x - 9; p.y = 13 * T - 16; p.vy = 0; p.vx = 0; p.inv = 0; p.ground = true; step(1); park();
         for (let i = 0; i < 10; i++) { step(1); grab(pangoSprite(e, G.tick, p.x).id, e.x - 13, 13 * T - 20, 42, 22); }
