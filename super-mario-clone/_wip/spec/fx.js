@@ -11,7 +11,7 @@ const SPEC_goo = t => {
     const a = Math.PI + (i + 0.5) / 8 * Math.PI, vx = Math.cos(a) * (0.8 + (i % 3) * 0.3), vy0 = Math.sin(a) * (1.4 + (i % 2) * 0.8);
     let x = 13, y = 18, vy = vy0;
     for (let k = 0; k < t; k++) { x += vx; y += vy; vy += 0.2; }
-    out.push({ k: 'goo', x, y, t, life: 26, vx, vy, col: i % 2 ? '#a048d8' : '#d8a0f8' });
+    out.push({ k: 'goo', x, y, t, life: 26, vx, vy, g: 0.2, col: i % 2 ? '#a048d8' : '#d8a0f8' });
   }
   return out;
 };
@@ -31,9 +31,11 @@ var SPEC = {
     { title: 'Pedaco de tijolo girando: um quadro por tick (4x)', n: 12, cw: 14, ch: 14, scale: 4, frame: i => ({ id: debSprite({ t: i, vx: 1 }), pal: 'deb', dy: -3, label: debSprite({ t: i, vx: 1 }) }) },
     { title: 'Poeira (vida 16 ticks, subindo devagar): um quadro por tick', n: 16, cw: 26, ch: 24, scale: 3, frame: i => SPEC_cell([SPEC_part('dust', i, 16, { x: 13 + i * 0.3, y: 20 - i * 0.35 })], 'dust t=' + i) },
     { title: 'Brilho (vida 16 ticks): a cada 2 ticks', n: 8, cw: 26, ch: 24, scale: 3, frame: i => SPEC_cell([SPEC_part('spark', i * 2, 16, { col: '#fcd848' })], 'spark t=' + i * 2) },
+    { title: 'Brilho padrao (sem cor) a cada 2 ticks', n: 8, cw: 26, ch: 24, scale: 3, frame: i => SPEC_cell([SPEC_part('spark', i * 2, 16)], 'spark t=' + i * 2) },
+    { title: 'Tijolo: os 4 pedacos (esq. espelhados, t0 = 0,3,6,9), a cada 3 ticks (3x)', n: 8, cw: 44, ch: 16, scale: 3, frame: i => ({ label: 't=' + i * 3, extra: (x2, X, Y, sc) => { x2.imageSmoothingEnabled = false; [0, 3, 6, 9].forEach((t0, j) => { const d = { t: t0 + i * 3, vx: j % 2 ? 1 : -1 }; x2.drawImage(spr(debSprite(d), 'deb', d.vx < 0), X + (2 + j * 10) * sc, Y + 2 * sc, 8 * sc, 8 * sc); }); } }) },
     { title: 'Impacto ao pisar (vida 10 ticks)', n: 10, cw: 26, ch: 24, scale: 3, frame: i => SPEC_cell([SPEC_part('burst', i, 10)], 'burst t=' + i) },
     { title: 'Estouro da bola de fogo (vida 12 ticks)', n: 12, cw: 26, ch: 24, scale: 3, frame: i => SPEC_cell([SPEC_part('ring', i, 12, { col: '#f88818' })], 'ring t=' + i) },
-    { title: 'Gotas da gosma pisada (vida 26 ticks): a cada 3 ticks', n: 9, cw: 26, ch: 24, scale: 3, frame: i => SPEC_cell(SPEC_goo(i * 3), 'goo t=' + i * 3) },
+    { title: 'Gotas da gosma pisada (vida 26 ticks): a cada 2 ticks', n: 13, cw: 26, ch: 24, scale: 3, frame: i => SPEC_cell(SPEC_goo(i * 2), 'goo t=' + i * 2) },
   ],
   context: [['coin0', 'coin'], ['fire0', 'fire'], ['deb0', 'deb'], ['h_stand', 'hero'], ['H_stand', 'hero']],
 };

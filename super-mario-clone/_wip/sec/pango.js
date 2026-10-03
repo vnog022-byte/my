@@ -1,34 +1,37 @@
 /* ---- Pango: pangolim de armadura (16x24 andando, olha para a esquerda; vira bola 16x16 quando pisado).
    Paleta NES de 3 cores: K=contorno A=escamas S=pele/brilho. ---- */
 PAL.pango = { K: '#3a1a08', A: '#c8701c', S: '#fcc890' };
-const PG_BODY = [
+const PG_ARMOR = [
   '................',
-  '.......KKKKK....',
-  '.....KKSSAKAKK..',
-  '....KSSAAAKAAAK.',
-  '....KSAAAAKAAAAK',
-  '....KAAAAAKAAAAK',
-  '....KKKKKKKAAAAK',
-  '..KKSSSSKSSKKKAK',
-  '.KSSSSKSSKAAKASK',
-  'KSSSSSKSSKAAKAAK',
-  'KKSSSSSSKAAAKAAK',
-  '.KKKSSSKKKKAAAAK',
-  '...KSSSKSSSKKKAK',
-  '..KSSSSKAAAAAASK',
-  '.KSKSSSKAAKAAAAK',
-  '..KKSSSKKKKAAAAK',
-  '...KSSSKSSSKKKAK',
-  '....KSSKAAAAAAAK',
-  '.....KKKKKKKAAAK',
+  '........KKKK....',
+  '......KKKAAAKK..',
+  '.....KAASSAAASK.',
+  '....KAAAKAAAAKAK',
+  '....KAAKAKAAKAKK',
+  '...KAKKAAAKKAAAK',
+  '...KAASSAAASSAAK',
+  '...KAAKAAAAKAAAK',
+  '...KAKAKAAKAKAAK',
+  '...KKAAAKKAAAKKK',
+  '...KSSAAASSAAASK',
+  '....KAAAAKAAAAKK',
+  '....KKAAKAKAAKAK',
+  '.....KKKAAAKKAAK',
+  '.....KASSAAASSAK',
+  '.....KAKAAAAKAAK',
+  '......KAKAAKAKK.',
+  '.......KKKKKKK..',
 ];
-const PG_TAIL = ['KAAK', '.KSK', '.KAK', '..K'];
+const PG_HEAD = ['...KKKK.', '.KKSSSSK', 'KSSSSKSK', 'KSSSSKSK', '.KKSSSSK', '...KKSK.'];
+const PG_BELLY = ['...KSSK', '..KSSSK', '.KSKSSK', '..KKSSK', '...KSSK', '....KSK', '....KKK'];
+const PG_TAIL = ['KAAK', 'KSAK', '.KAK', '.KSK', '.KAK', '..KK'];
 const PG_LEGS = {
   a: ['....KSSKKAAK....', '...KSSK.KAAK....', '..KSSK..KAAK....', '.KSSSK.KAAAK....', '.KKKKK.KKKKK....'],
   b: ['....KAAKKSSK....', '...KAAK.KSSK....', '.KAAAK.KSSSK....', '.KKKKK.KKKKK....'],
 };
-ROWS.pango_a = compose(16, 24, [[PG_BODY], [PG_TAIL, 12, 19], [PG_LEGS.a, 0, 19]]);
-ROWS.pango_b = compose(16, 24, [[PG_BODY, 0, 1], [PG_TAIL, 12, 20], [PG_LEGS.b, 0, 20]]);
+const pgWalk = (legs, dy) => compose(16, 24, [[PG_TAIL, 12, 17 + dy], [PG_ARMOR, 0, dy], [PG_HEAD, 0, 7 + dy], [PG_BELLY, 0, 12 + dy], [legs, 0, 24 - legs.length]]);
+ROWS.pango_a = pgWalk(PG_LEGS.a, 0);
+ROWS.pango_b = pgWalk(PG_LEGS.b, 1);
 ROWS.pango_c = ROWS.pango_a;
 
 /* bola (casco): placas separadas por linhas, brilho fixo no alto a esquerda; os 4 quadros de giro
