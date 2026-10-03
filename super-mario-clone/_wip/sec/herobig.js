@@ -45,38 +45,39 @@ const HB_ARM = {
 };
 const HB_ARMY = { up: 0, upF: 3, upB: 4, grip: 8 };
 /* deslocamento do braco de longe (fica atras do tronco; so aparece o que sai da silhueta) */
-const HB_FARX = { b1: -1, b2: -1, f1: 2, f2: 2, dn: 0, upB: 0, grip: 0, thr: 2 };
-/* pernas: preenchimento das linhas 18-30 (o quadril cobre o topo; a linha 31 e a sola automatica) */
+const HB_FARX = { b1: -3, b2: -1, f1: 3, f2: 2, dn: 0, upB: 0, grip: 0, thr: 2 };
+/* pernas: preenchimento das linhas 18-30 (o quadril cobre o topo; a linha 31 e a sola automatica).
+   HB_leg([[ate_linha, x], ...], [[linha, x0, x1], ...]): canela/coxa de 2 px na coluna x ate a linha dada, depois o tenis.
+   A perna que vai para frente sai do quadril em x=9-10, a que vai para tras/fica embaixo em x=6-7 (contorno em x=8 entre elas). */
+const HB_leg = (segs, shoe) => {
+  const g = Array.from({ length: 13 }, () => new Array(16).fill('.'));
+  let y = 18;
+  for (const [to, x] of segs) for (; y <= to; y++) g[y - 18][x] = g[y - 18][x + 1] = 'P';
+  for (const [yy, x0, x1] of shoe) for (let x = x0; x <= x1; x++) g[yy - 18][x] = 'O';
+  return g.map(r => r.join(''));
+};
 const HB_LEG = [
   // 0 contato: perna da frente esticada, calcanhar em 11
-  ['........PP......', '........PP......', '.........PP.....', '.........PP.....', '.........PP.....', '..........PP....', '..........PP....',
-   '..........PP....', '..........PP....', '...........PP...', '...........PP...', '...........OOO..', '...........OOOO.'],
-  // 1 carga: joelho em ">" (2 px a frente), canela vertical, calcanhar em 9
-  ['........PP......', '........PP......', '.........PP.....', '.........PP.....', '..........PP....', '...........PP...', '..........PP....',
-   '.........PP.....', '.........PP.....', '.........PP.....', '.........PP.....', '.........OOO....', '.........OOOO...'],
+  HB_leg([[22, 9], [26, 10], [28, 11]], [[29, 11, 13], [30, 11, 14]]),
+  // 1 carga: joelho em ">" (2 px a frente do quadril), canela vertical, calcanhar em 9
+  HB_leg([[21, 9], [22, 10], [23, 11], [24, 10], [28, 9]], [[29, 9, 11], [30, 9, 12]]),
   // 2 passagem (apoio): perna reta embaixo do quadril, calcanhar em 6
-  ['.......PP.......', '.......PP.......', '.......PP.......', '.......PP.......', '.......PP.......', '.......PP.......', '......PP........',
-   '......PP........', '......PP........', '......PP........', '......PP........', '......OOO.......', '......OOOO......'],
+  HB_leg([[28, 6]], [[29, 6, 8], [30, 6, 9]]),
   // 3 impulso: perna inclinada para tras, calcanhar em 4
-  ['.......PP.......', '.......PP.......', '......PP........', '......PP........', '......PP........', '.....PP.........', '.....PP.........',
-   '.....PP.........', '.....PP.........', '....PP..........', '....PP..........', '....OOO.........', '....OOOO........'],
-  // 4 saida: calcanhar 2 px acima do chao, sola na diagonal, ponta no chao em 5
-  ['.......PP.......', '.......PP.......', '.......PP.......', '......PP........', '......PP........', '.....PP.........', '.....PP.........',
-   '....PP..........', '....PP..........', '...PP...........', '..OOO...........', '...OOO..........', '....OO..........'],
-  // 5 balanco: pe sobe atras, ponta para baixo
-  ['.......PP.......', '.......PP.......', '.......PP.......', '.......PP.......', '.......PP.......', '......PP........', '.....PP.........',
-   '....PP..........', '...OOO..........', '....OOO.........', '.....OO.........', '................', '................'],
-  // 6 passagem (livre): joelho a frente (x=11-12 na linha 23), canela descendo, pe erguido 3 px
-  ['........PP......', '........PP......', '.........PP.....', '.........PP.....', '..........PP....', '...........PP...', '...........PP...',
-   '...........PP...', '...........OOO..', '...........OOOO.', '................', '................', '................'],
+  HB_leg([[21, 6], [25, 5], [28, 4]], [[29, 4, 6], [30, 4, 7]]),
+  // 4 saida: calcanhar 2 px acima do chao, sola na diagonal, ponta no chao em x=5
+  HB_leg([[21, 6], [23, 5], [25, 4], [27, 3]], [[28, 2, 4], [29, 3, 5], [30, 4, 5]]),
+  // 5 balanco: o pe sobe atras, ponta para baixo
+  HB_leg([[22, 6], [23, 5], [24, 4], [25, 3]], [[26, 3, 5], [27, 4, 6], [28, 5, 6]]),
+  // 6 passagem (livre): joelho a frente (x=11-12 na linha 23), canela descendo, pe erguido 3 px, 1 px de ceu ate a perna de apoio
+  HB_leg([[20, 9], [22, 10], [25, 11]], [[26, 11, 13], [27, 11, 14]]),
   // 7 alcance: perna se estica a frente, pe 2 px acima do chao com a ponta para cima
-  ['........PP......', '........PP......', '.........PP.....', '.........PP.....', '..........PP....', '..........PP....', '...........PP...',
-   '...........PP...', '...........PP.O.', '...........OOOO.', '...........OOO..', '................', '................'],
+  HB_leg([[20, 9], [23, 10], [26, 11]], [[26, 14, 14], [27, 11, 14], [28, 11, 13]]),
 ];
 const HB_far = rows => recolor(rows, { P: 'Q', O: 'N' });
 const HB_BOB = [1, 2, 0, 0], HB_LEAN = [0, 0, 0, 1];
 /* monta um quadro. o: { near, far (pernas, linhas 18-30), dy (corpo desce), dx (corpo a frente),
-   aN/aF (bracos de perto/longe: nome em HB_ARM), head, hipDy } */
+   aN/aF (bracos de perto/longe: nome em HB_ARM ou [nome, desce]), head, hx (cabeca alem do tronco) } */
 const HB_frame = o => {
   const dy = o.dy || 0, dx = o.dx || 0, hy = 17 + dy, parts = [];
   const arm = (a, far) => { const [k, oy = 0] = [].concat(a);
@@ -86,7 +87,7 @@ const HB_frame = o => {
   if (o.far) parts.push({ rows: HB_far(o.far), y: 18, ol: true, y1: hy + 2 });
   if (o.near) parts.push({ rows: o.near, y: 18, ol: true, y1: hy + 2 });
   parts.push({ rows: HB_TORSO, x: dx, y: 7 + dy, ol: true, y2: 16 + dy });
-  parts.push({ rows: o.head || HH, x: 2 + dx, y: dy });
+  parts.push({ rows: o.head || HH, x: 2 + dx + (o.hx || 0), y: dy });
   if (o.aN) parts.push(arm(o.aN, false));
   return HB_paint(parts);
 };
@@ -101,9 +102,9 @@ for (let f = 0; f < 8; f++) {
 /* parado: perna de perto em 3/4 (coxa larga, joelho, canela), a de tras parcialmente escondida */
 const HB_STAND_N = ['.......PPP......', '.......PPP......', '.......PPP......', '.......PPP......', '.......PPP......', '.......PPP......', '........PP......',
   '........PP......', '........PP......', '........PP......', '........PP......', '........OOO.....', '........OOOO....'];
-const HB_STAND_F = ['....PPP.........', '....PPP.........', '....PPP.........', '....PPP.........', '....PPP.........', '....PPP.........', '....PP..........',
-  '....PP..........', '....PP..........', '....PP..........', '....PP..........', '....OOO.........', '....OOOO........'];
-const HB_STAND = { near: HB_STAND_N, far: HB_STAND_F, aN: 'dn', aF: 'b1' };
+const HB_STAND_F = ['....PPP.........', '....PPP.........', '....PPP.........', '....PPP.........', '....PPP.........', '....PPP.........', '.....PP.........',
+  '.....PP.........', '.....PP.........', '.....PP.........', '.....PP.........', '.....OOO........', '.....OOOO.......'];
+const HB_STAND = { near: HB_STAND_N, far: HB_STAND_F, aN: 'dn' };
 ROWS.H_stand = HB_frame(HB_STAND);
 ROWS.H_stand2 = HB_frame({ ...HB_STAND, head: HH2 });
 ROWS.H_stand_t = HB_frame({ ...HB_STAND, aN: 'thr' });
@@ -113,14 +114,14 @@ const HB_JUMP_N = ['........PP......', '........PP......', '.........PP.....', '
   '..........PP....', '..........OOO...', '..........OOOO..', '................', '................', '................'];
 const HB_JUMP_F = ['.......PP.......', '.......PP.......', '......PP........', '......PP........', '.....PP.........', '.....PP.........', '....PP..........',
   '....PP..........', '...PP...........', '..OOO...........', '.OOO............', '.OO.............', '................'];
-ROWS.H_jump = HB_frame({ near: HB_JUMP_N, far: HB_JUMP_F, dx: 1, aN: 'up', aF: 'b2' });
-ROWS.H_jump_t = HB_frame({ near: HB_JUMP_N, far: HB_JUMP_F, dx: 1, aN: 'thr', aF: 'b2' });
+ROWS.H_jump = HB_frame({ near: HB_JUMP_N, far: HB_JUMP_F, hx: -1, aN: 'up', aF: 'b2' });
+ROWS.H_jump_t = HB_frame({ near: HB_JUMP_N, far: HB_JUMP_F, hx: -1, aN: 'thr', aF: 'b2' });
 /* queda: bracos abertos para cima, perna de perto pendurada a frente, a de tras dobrada */
 const HB_FALL_N = ['........PP......', '........PP......', '.........PP.....', '.........PP.....', '.........PP.....', '..........PP....', '..........PP....',
   '..........PP....', '..........PP....', '..........OOO...', '...........OOO..', '................', '................'];
 const HB_FALL_F = ['.......PP.......', '.......PP.......', '......PP........', '......PP........', '.....PP.........', '.....PP.........', '....PP..........',
   '...PP...........', '..OOO...........', '...OOO..........', '....OO..........', '................', '................'];
-ROWS.H_fall = HB_frame({ near: HB_FALL_N, far: HB_FALL_F, aN: 'upF', aF: 'upB' });
+ROWS.H_fall = HB_frame({ near: HB_FALL_N, far: HB_FALL_F, hx: -1, aN: 'upF', aF: 'upB' });
 ROWS.H_fall_t = HB_frame({ near: HB_FALL_N, far: HB_FALL_F, aN: 'thr', aF: 'upB' });
 /* derrapagem: pe da frente fincado (ponta para cima), o de tras dobrado, tronco e cabeca para tras, braco esticado */
 const HB_SKID_N = ['.........PP.....', '.........PP.....', '.........PP.....', '..........PP....', '..........PP....', '..........PP....', '...........PP...',
@@ -148,5 +149,5 @@ const HB_CLIMB_UP = ['........PP......', '.........PP.....', '..........PP....',
   '..........OOO...', '..........OOOO..', '................', '................', '................', '................'];
 const HB_CLIMB_DN = ['.......PP.......', '.......PP.......', '.......PP.......', '.......PP.......', '.......PP.......', '.......PP.......', '.......PP.......',
   '.......PP.......', '........PP......', '........OOO.....', '........OOOO....', '................', '................'];
-ROWS.H_climb1 = HB_frame({ near: HB_CLIMB_UP, far: HB_CLIMB_DN, dx: -1, aN: ['grip', -2], aF: ['grip', 3] });
-ROWS.H_climb2 = HB_frame({ near: HB_CLIMB_DN, far: HB_CLIMB_UP, dx: -1, dy: 1, aN: ['grip', 3], aF: ['grip', -2] });
+ROWS.H_climb1 = HB_frame({ near: HB_CLIMB_UP, far: HB_CLIMB_DN, dx: -1, aN: ['grip', 0], aF: ['grip', 4] });
+ROWS.H_climb2 = HB_frame({ near: HB_CLIMB_DN, far: HB_CLIMB_UP, dx: -1, dy: 1, aN: ['grip', 3], aF: ['grip', -1] });
