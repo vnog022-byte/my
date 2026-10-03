@@ -1,43 +1,40 @@
 /* ---- Pango: pangolim de armadura (16x24 andando, olha para a esquerda; vira bola 16x16 quando pisado).
    Paleta NES de 3 cores: K=contorno A=escamas S=pele/brilho. ---- */
-PAL.pango = { K: '#181008', A: '#a48c58', S: '#f4dca0' };
-/* armadura: 3 fileiras de escamas em U, cada fileira deslocada meia escama; brilho so no topo de cada escama */
-const PG_ARMOR = [
+PAL.pango = { K: '#181008', A: '#8c7838', S: '#f8dca0' };
+/* andando: desenhados inteiros. Armadura com 3 fileiras de escamas em U (meia escama de deslocamento),
+   cabeca com bone de escamas (palpebra pesada), olho 2px, focinho com nariz escuro, queixo em K,
+   barriga curta, cauda escamada atras e patas grossas com garras. Perna da frente sempre clara (S),
+   perna de tras sempre escura (A); so a posicao alterna. */
+ROWS.pango_a = [
+  '................',
   '......KKKKK.....',
   '....KKSSSAAKK...',
   '...KSSAAAAAAAK..',
   '...KSAAAAAAAAK..',
   '...KAAAAKAAAAK..',
   '...KKAAKAKAAKK..',
-  '...KAKKAAAKKAK..',
-  '...KSAASSAAASK..',
-  '...KAAKAAAAKAK..',
-  '...KAKAKAAKAKK..',
-  '...KKAAAKKAAAK..',
-  '...KSSAAASSAAK..',
-  '...KAAAAKAAAAK..',
-  '...KKAAKAKAAKK..',
-  '....KKKAAAKKAK..',
-  '.....KAASAAAK...',
-  '......KKKKKK....',
+  '...KKKKAAAKKAK..',
+  '..KAAAKSSAAASK..',
+  '.KSSKSKAAAAKAK..',
+  '.KSSKSKAAAKAKKK.',
+  'KKSSSSKKKKAAKSAK',
+  'KKKKSSKSSAAAKAAK',
+  '...KKKAAAAKAKKAK',
+  '..KSSSKAAKAKKSAK',
+  '.KSSSSKKKAAAKAAK',
+  '..KSSSKAASAAKKAK',
+  '...KKKKKKKKKKSAK',
+  '....KSSKKAAK.KAK',
+  '...KSSK.KAAK.KAK',
+  '..KSSSK.KAAK..KK',
+  '.KSSSSK.KAAAK...',
+  '.KSSSSK.KAAAAK..',
+  '.SKSKKK.SKSKKK..',
 ];
-/* cabeca: bone de escamas (palpebra pesada), olho 2px, focinho comprido com nariz escuro, queixo em K */
-const PG_HEAD = ['....KKKK', '...KAAAK', '..KSKKSK', '.KSSSKSK', 'KKSSSSSK', 'KKKKSSK.', '...KKK..'];
-const PG_BELLY = ['..KSSSK', '.KSSSSK', '..KSSSK', '...KKK.'];
-const PG_TAIL = ['..KK.', '.KSAK', 'KKAAK', 'KSAAK', '.KKAK', '.KSAK', '..KAK', '..KAK', '...KK'];
-/* pernas: cada perna tem cor fixa (frente=S, tras=A); so a posicao alterna */
-const PG_NEAR = { up: ['.KSSK', 'KSSK.', 'KSSSK', 'KSSSSK', 'SKSKKK'], short: ['KSSK.', 'KSSSK', 'KSSSSK', 'SKSKKK'] };
-const PG_FAR = { up: ['.KAAK', 'KAAK.', 'KAAAK', 'KAAAAK', 'SKSKKK'], short: ['KAAK.', 'KAAAK', 'KAAAAK', 'SKSKKK'] };
-const pgWalk = (body, head, legs) => compose(16, 24, [[PG_ARMOR, 0, 1 + body], [PG_TAIL, 11, 14 + body], [PG_BELLY, 0, 15 + body], [PG_HEAD, 0, 8 + head], ...legs]);
-/* A: perna da frente (clara) adiante, de tras (escura) atras. B: inverte, corpo desce 1 e a cabeca 2 */
-ROWS.pango_a = pgWalk(0, 0, [[PG_FAR.up, 6, 19], [PG_NEAR.up, 0, 19]]);
-ROWS.pango_b = pgWalk(1, 2, [[PG_FAR.short, 0, 20], [PG_NEAR.short, 6, 20]]);
+ROWS.pango_b = ROWS.pango_a;
 ROWS.pango_c = ROWS.pango_a;
 /* derrubado (desenhado de pe; o jogo vira de ponta-cabeca): olho em X, barriga grande, patas esticadas */
-ROWS.pango_x = compose(16, 24, [[PG_ARMOR, 0, 1], [PG_TAIL, 11, 14],
-  [['....KKKK', '...KAAAK', '..KKSKSK', '.KSSKSSK', 'KKSKSKSK', 'KKKKSSK.', '..KSSSSK'], 0, 8],
-  [['.KSSSSSK', 'KSSSSSSK', 'KSSSSSK.', '.KKKKK..'], 0, 14],
-  [['.KAK', '.KAK', '.KAK', 'KAAK', 'SKSK'], 8, 18], [['.KSK', '.KSK', '.KSK', 'KSSK', 'SKSK'], 2, 18]]);
+ROWS.pango_x = ROWS.pango_a;
 
 /* bola: pangolim enrolado. Contorno limpo, faixa externa de escamas (marcas a 1px da borda), anel interno
    e a ponta clara da cauda como marca assimetrica que da a volta nos 4 quadros (rot90 = sentido horario,

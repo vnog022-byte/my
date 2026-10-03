@@ -12,8 +12,8 @@ const blobMask = (on, extra) => {
 };
 /* formas (lx..rx, top..bot, recuo por linha): base sempre na linha 12, pes com 3 linhas visiveis */
 const BLOB_SHAPE = {
-  c: { lx: 0, rx: 15, top: 3, ins: [4, 2, 1, 0, 0, 0, 0, 0, 0, 1] },
-  m: { lx: 1, rx: 14, top: 2, ins: [4, 2, 1, 0, 0, 0, 0, 0, 0, 0, 1] },
+  c: { lx: 0, rx: 15, top: 3, ins: [4, 2, 1, 1, 0, 0, 0, 0, 0, 1] },
+  m: { lx: 1, rx: 14, top: 2, ins: [4, 2, 1, 1, 0, 0, 0, 0, 0, 0, 1] },
   p: { lx: 2, rx: 13, top: 1, ins: [3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1] } };
 const BLOB_CYCLE = ['c', 'm', 'p', 'm', 'c', 'm', 'p', 'm'];
 const blobBody = (i, ko) => {
@@ -48,9 +48,8 @@ const BLOB_FACE_KO = [
   '....KK....KK....',
   '...K..K..K..K...',
   '................',
-  '.......KK.......',
   '......KLLK......'];
-const BLOB_NEAR = ['.KKK.', 'KLLLK', 'KLLBK', '.KKK.'], BLOB_FAR = ['.KKK.', 'KBBBK', 'KBBBK', '.KKK.'];
+const BLOB_NEAR = ['.KKK.', 'KLLLK', 'KLLLK', '.KKK.'], BLOB_FAR = ['.KKK.', 'KBBBK', 'KBBBK', '.KKK.'];
 const BLOB_PX = [2, 4, 6, 8, 9, 7, 5, 3], BLOB_LIFT = [0, 0, 0, 0, 1, 1, 1, 1];
 const blobWalk = (i, face) => {
   const a = i % 8, b = (i + 4) % 8, s = BLOB_SHAPE[BLOB_CYCLE[a]];
@@ -70,7 +69,7 @@ ROWS.blob_flat = compose(16, 16, [
     || (y === 12 && (x === 0 || x === 15)) || (y === 13 && (x === 0 || x === 15)) || (y === 11 && (x === 1 || x === 14)))],
   [['KK....KK'], 4, 13], [['LL'], 6, 12]]);
 /* derrubada (casco/bloco/fogo): olhos em X cheio, boca aberta, pes juntos na base — virada com vflip */
-ROWS.blob_ko = compose(16, 16, [[BLOB_FAR, 8, 12], [BLOB_NEAR, 3, 12], [blobBody(1, true)], [BLOB_FACE_KO, 0, 4], [['LL'], 4, 3]]);
+ROWS.blob_ko = compose(16, 16, [[BLOB_FAR, 8, 12], [BLOB_NEAR, 3, 12], [blobBody(1, true)], [BLOB_FACE_KO, 0, 5], [['LL'], 4, 3]]);
 PAL.blob = { K: '#000000', B: '#8000f0', L: '#fcc4fc' };
 const BLOB_WALK = ['blob_w0', 'blob_w1', 'blob_w2', 'blob_w3', 'blob_w4', 'blob_w5', 'blob_w6', 'blob_w7'], BLOB_STEP = 4;
 function blobSprite(e, tick) {
