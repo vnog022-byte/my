@@ -31,7 +31,8 @@ const HB_TORSO = ['.....CCCCCC.....', '....CCCCCCC.....', '....CCCCCCCC....', '.
 const HB_HIP = ['.....PPPPPP.....', '.....PPPPPP.....'];
 /* bracos (preenchimento a partir da linha 8; ombro em x=7-8). b = para tras, f = para frente; a mao acaba na linha 15 */
 const HB_ARM = {
-  dn: ['.......CC.......', '.......CC.......', '.......CC.......', '.......CC.......', '.......CC.......', '.......LL.......', '.......SS.......', '.......SS.......'],
+  // caido: a mao fica na borda do peito (x=8-9) e termina 1 px acima da barra
+  dn: ['.......CC.......', '.......CC.......', '.......CC.......', '........CC......', '........CC......', '........SS......', '........SS......'],
   b1: ['.......CC.......', '.......CC.......', '......CC........', '......CC........', '.....CC.........', '.....LL.........', '.....SS.........', '.....SS.........'],
   b2: ['.......CC.......', '......CC........', '.....CC.........', '....CC..........', '....LL..........', '...SS...........', '...SS...........'],
   f1: ['.......CC.......', '.......CC.......', '........CC......', '........CC......', '.........CC.....', '.........LL.....', '.........SS.....', '.........SS.....'],
@@ -40,16 +41,22 @@ const HB_ARM = {
   // aberto para tras, quase na horizontal (derrapagem)
   bk: ['.......CC.......', '.....CCC........', '....LL..........', '...SS...........', '...SS...........'],
   // pulo: punho (S) e punho da manga (L) acima da orelha, longe da cabeca (comeca na linha 0)
-  up: ['.............SS.', '.............SS.', '.............LL.', '.............CC.', '.............CC.', '............CC..', '...........CC...',
-    '.........CCC....', '.......CCC......'],
-  // queda / derrapagem: braco aberto para cima e para frente (comeca na linha 3)
-  upF: ['............SS..', '............SS..', '............LL..', '...........CC...', '..........CC....', '.........CC.....'],
+  // pulo (coordenadas finais para o tronco 1 px atras; use com avanco +1): punho KSSK em x=13-14 acima da orelha,
+  // braco vertical com 1 px de ceu ate a cabeca, descendo ao ombro so abaixo dela
+  up: ['.............SS.', '.............SS.', '.............LL.', '.............CC.', '.............CC.', '.............CC.', '.............CC.',
+    '...........CC...', '.........CCC....'],
+  // queda: bracos abertos para os lados na altura do ombro (silhueta em T)
+  sideF: ['.......CCCCCLSS.', '.......CCCCCLSS.'],
+  sideB: ['.SSLCCCC........', '.SSLCCCC........'],
+  // derrapagem (coordenadas finais para o tronco 2 px atras; use com avanco +2): braco esticado para a frente,
+  // descendo do ombro ate a altura do peito, contra o movimento
+  brk: ['.....CC.........', '......CCC.......', '........CCL.....', '..........SS....', '..........SS....'],
   // mastro: braco reto ate o mastro (mao em x=13-14 antes do deslocamento de -1)
   grip: ['.......CCCCLSS..', '.......CCCCLSS..'],
 };
-const HB_ARMY = { up: 0, upF: 3, grip: 8 };
+const HB_ARMY = { up: 0, grip: 8 };
 /* deslocamento do braco de longe (fica atras do tronco; so aparece o que sai da silhueta) */
-const HB_FARX = { b1: -3, b2: -1, f1: 3, f2: 2, dn: 0, grip: 0, thr: 2, bk: 0 };
+const HB_FARX = { b1: -3, b2: -1, f1: 3, f2: 2, dn: 0, grip: 1, thr: 2, bk: 0, sideB: 0 };
 /* pernas: preenchimento das linhas 18-30 (o quadril cobre o topo; a linha 31 e a sola automatica).
    HB_leg([[ate_linha, x], ...], [[linha, x0, x1], ...]): perna de 2 px na coluna x ate a linha dada, depois o tenis. */
 const HB_leg = (segs, shoe) => {
@@ -116,18 +123,18 @@ ROWS.H_stand2_t = HB_frame({ ...HB_STAND, aN: 'thr', head: HH2 });
 const HB_JUMP_N = ['........PP......', '.........PP.....', '..........PP....', '...........PP...', '...........PP...', '..........PP....', '..........PP....',
   '.........OOO....', '.........OOOO...', '................', '................', '................', '................'];
 const HB_JUMP_F = HB_leg([[20, 6], [22, 5], [24, 4], [26, 3], [27, 2]], [[28, 1, 2], [29, 1, 3], [30, 2, 3]]);
-ROWS.H_jump = HB_frame({ near: HB_JUMP_N, far: HB_JUMP_F, dx: -1, hx: -1, aN: ['up', 0, 2], aF: 'b2' });
+ROWS.H_jump = HB_frame({ near: HB_JUMP_N, far: HB_JUMP_F, dx: -1, hx: -1, aN: ['up', 0, 1], aF: 'b2' });
 ROWS.H_jump_t = HB_frame({ near: HB_JUMP_N, far: HB_JUMP_F, dx: -1, hx: -1, aN: ['thr', 0, 1], aF: 'b2' });
 /* queda: braco da frente aberto para cima, o de tras inteiro atras do corpo; pernas bem abertas para baixo */
-const HB_FALL_N = HB_leg([[20, 9], [22, 10], [25, 11], [27, 12]], [[28, 12, 14], [29, 13, 14]]);
-const HB_FALL_F = HB_leg([[20, 7], [22, 6], [24, 5], [26, 4], [27, 3]], [[28, 2, 4], [29, 2, 5]]);
-ROWS.H_fall = HB_frame({ near: HB_FALL_N, far: HB_FALL_F, hx: -1, aN: ['upF', 0, 2], aF: 'b2' });
-ROWS.H_fall_t = HB_frame({ near: HB_FALL_N, far: HB_FALL_F, hx: -1, aN: 'thr', aF: 'b2' });
+const HB_FALL_N = HB_leg([[23, 9], [28, 10]], [[29, 10, 12], [30, 11, 13]]);
+const HB_FALL_F = HB_leg([[27, 6]], [[28, 6, 8], [29, 7, 9]]);
+ROWS.H_fall = HB_frame({ near: HB_FALL_N, far: HB_FALL_F, hx: -1, aN: 'sideF', aF: 'sideB' });
+ROWS.H_fall_t = HB_frame({ near: HB_FALL_N, far: HB_FALL_F, hx: -1, aN: ['thr', 1], aF: 'sideB' });
 /* derrapagem: tronco e cabeca 2 px para tras, perna da frente esticada e fincada (ponta para cima),
    a de tras dobrada embaixo do corpo, bracos abertos (o da frente para cima) */
 const HB_SKID_N = HB_leg([[19, 8], [21, 9], [24, 10], [28, 11]], [[29, 11, 14], [30, 11, 13]]);
-const HB_SKID_F = HB_leg([[20, 6], [22, 5], [28, 4]], [[29, 4, 6], [30, 4, 7]]);
-ROWS.H_skid = HB_frame({ near: HB_SKID_N, far: HB_SKID_F, dx: -2, aN: 'bk', aF: ['upF', 0, 3] });
+const HB_SKID_F = HB_leg([[28, 5]], [[29, 5, 7], [30, 5, 8]]);
+ROWS.H_skid = HB_frame({ near: HB_SKID_N, far: HB_SKID_F, dx: -2, aN: ['brk', 0, 2] });
 ROWS.H_skid_t = HB_frame({ near: HB_SKID_N, far: HB_SKID_F, dx: -2, aN: ['thr', 1, 1] });
 /* aterrissagem: corpo 3 px abaixo, joelhos 3 px para fora, tenis separados, bracos abrindo */
 const HB_LAND_N = HB_leg([[22, 9], [23, 10], [24, 11], [26, 12], [28, 11]], [[29, 11, 13], [30, 11, 14]]);
@@ -144,7 +151,7 @@ ROWS.H_duck_t = HB_frame({ near: HB_DUCK_N, far: HB_DUCK_F, dy: 7, aN: 'thr', aF
 /* mastro (colunas 12-13): corpo 1 px para tras, maos e joelhos alternam */
 const HB_CLIMB_UP = ['........PP......', '.........PP.....', '..........PP....', '...........PP...', '...........PP...', '..........PP....', '..........PP....',
   '..........OOO...', '..........OOOO..', '................', '................', '................', '................'];
-const HB_CLIMB_DN = ['.......PP.......', '.......PP.......', '.......PP.......', '.......PP.......', '.......PP.......', '.......PP.......', '.......PP.......',
+const HB_CLIMB_DN = ['......PP........', '......PP........', '......PP........', '......PP........', '......PP........', '......PP........', '......PP........',
   '.......PP.......', '........PP......', '........OOO.....', '........OOOO....', '................', '................'];
 ROWS.H_climb1 = HB_frame({ near: HB_CLIMB_UP, far: HB_CLIMB_DN, dx: -1, aN: ['grip', 0], aF: ['grip', 4] });
 ROWS.H_climb2 = HB_frame({ near: HB_CLIMB_DN, far: HB_CLIMB_UP, dx: -1, dy: 1, aN: ['grip', 3], aF: ['grip', -1] });

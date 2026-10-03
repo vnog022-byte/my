@@ -42,8 +42,9 @@ const PG_TAIL = [
   '..KKKAK.',
   '...KSAAK',
   '....KAAK',
-  '.....KKK',
+  '.....KAK',
   '......KK',
+  '.......K',
 ];
 /* cabeca baixa: focinho conico (1->2->3px) com nariz K de 2px, queixo subindo em diagonal,
    olho de 2px na vertical sob a palpebra pesada (as escamas do bone) */
@@ -67,9 +68,9 @@ const pgLift = (c, foot, top) => { const l = pgLeg(c, foot, top); return [l[0], 
 const pgWalk = (body, head, legs) => compose(16, 24, [[PG_TAIL, 8, 15 + body], [PG_ARMOR, 0, body],
   [PG_BELLY, 5, 16 + body], [PG_HEAD, 0, 11 + head], ...legs.map(l => [l, 0, 18])]);
 ROWS.pango_a = pgWalk(0, -1, [pgLeg('A', 5, 7), pgLeg('S', 1, 5)]);          // contato: frente S adiante
-ROWS.pango_c = pgWalk(-1, 0, [pgLift('A', 4, 6), pgLeg('S', 3, 5)]);            // passagem: S apoiada, A passando
+ROWS.pango_c = pgWalk(-1, 0, [pgLift('A', 6, 6), pgLeg('S', 3, 5)]);            // passagem: S apoiada, A passando
 ROWS.pango_b = pgWalk(0, -1, [pgLeg('A', 1, 5), pgLeg('S', 5, 7)]);          // contato: tras A adiante
-ROWS.pango_d = pgWalk(-1, 0, [pgLeg('A', 3, 5), pgLift('S', 4, 6)]);            // passagem: A apoiada, S passando
+ROWS.pango_d = pgWalk(-1, 0, [pgLeg('A', 3, 5), pgLift('S', 6, 6)]);            // passagem: A apoiada, S passando
 const PG_WALK = ['pango_a', 'pango_c', 'pango_b', 'pango_d'];
 
 /* derrubado (de pe aqui; o jogo vira de ponta-cabeca): olho em X 3x3 cercado de S, boca aberta,
