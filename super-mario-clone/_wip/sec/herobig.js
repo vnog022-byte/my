@@ -67,11 +67,11 @@ const HB_LEG = [
   // 2 impulso: perna inclinada para tras, calcanhar em 3
   HB_leg([[20, 7], [22, 6], [24, 5], [26, 4], [28, 3]], [[29, 3, 5], [30, 3, 6]]),
   // 3 saida (no contato da outra perna): calcanhar 2 px acima do chao, sola na diagonal, ponta no chao em x=3
-  HB_leg([[20, 7], [21, 6], [23, 5], [25, 4], [26, 3], [27, 2]], [[28, 1, 2], [29, 2, 3], [30, 2, 3]]),
+  HB_leg([[20, 6], [22, 5], [24, 4], [26, 3], [27, 2]], [[28, 1, 2], [29, 1, 3], [30, 2, 3]]),
   // 4 passagem (livre): joelho a frente (x=11-12), canela descendo, pe erguido com a ponta para baixo e ceu ate a perna de apoio
   HB_leg([[20, 10], [22, 11], [25, 12]], [[26, 12, 14], [27, 13, 14]]),
   // 5 alcance (no impulso da outra perna): perna estica a frente, pe 2 px acima do chao, sola subindo ate a ponta
-  HB_leg([[20, 9], [23, 10], [26, 11]], [[27, 11, 14], [28, 11, 13]]),
+  HB_leg([[23, 10], [26, 11]], [[27, 11, 14], [28, 11, 13]]),
 ];
 const HB_far = rows => recolor(rows, { P: 'Q', O: 'N' });
 const HB_BOB = [1, 0, 0];
@@ -115,7 +115,7 @@ ROWS.H_stand2_t = HB_frame({ ...HB_STAND, aN: 'thr', head: HH2 });
    perna de tras esticada na diagonal com a ponta para baixo */
 const HB_JUMP_N = ['........PP......', '.........PP.....', '..........PP....', '...........PP...', '...........PP...', '..........PP....', '..........PP....',
   '.........OOO....', '.........OOOO...', '................', '................', '................', '................'];
-const HB_JUMP_F = HB_leg([[20, 7], [21, 6], [23, 5], [25, 4], [26, 3], [27, 2]], [[28, 1, 2], [29, 2, 3], [30, 2, 3]]);
+const HB_JUMP_F = HB_leg([[20, 6], [22, 5], [24, 4], [26, 3], [27, 2]], [[28, 1, 2], [29, 1, 3], [30, 2, 3]]);
 ROWS.H_jump = HB_frame({ near: HB_JUMP_N, far: HB_JUMP_F, dx: -1, hx: -1, aN: ['up', 0, 2], aF: 'b2' });
 ROWS.H_jump_t = HB_frame({ near: HB_JUMP_N, far: HB_JUMP_F, dx: -1, hx: -1, aN: ['thr', 0, 1], aF: 'b2' });
 /* queda: braco da frente aberto para cima, o de tras inteiro atras do corpo; pernas bem abertas para baixo */

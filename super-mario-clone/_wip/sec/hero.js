@@ -1,10 +1,10 @@
 /* ---- Heroi pequeno (16x16), cabeca e paletas compartilhadas, e escolha de quadro do heroi.
    Sub-paletas: corpo K/C/L (contorno, moletom, claro), pele S + olho E(=K), pernas P/Q (calca vinho perto/longe).
-   Tenis creme O / cinza-areia N (contrastam com moletom, ceu e tijolo); T, B fundidos em S (as letras continuam definidas para o heroi grande).
+   Tenis creme O = N (contrastam com moletom, ceu e tijolo); T, B fundidos em S (as letras continuam definidas para o heroi grande).
    Cada quadro e pintado em camadas por HS_paint: perna de longe, perna de perto e bracos (manga C + mao S)
    ganham contorno K automatico (sola K = contato com o chao); tronco e cabeca HH (12x7 em x=2).
    Caminhada em 4 quadros: contato (perna da frente quase vertical, pe de tras na ponta com o calcanhar
-   erguido), passagem (perna de apoio reta, a livre dobrada com o pe erguido 2 px atras), e os mesmos com as
+   erguido), passagem (perna de apoio reta, a livre dobrada com o pe erguido atras, canela inclinada), e os mesmos com as
    pernas trocadas. A ponta do pe de apoio vai 14 -> 9 -> 4: 5 px por quadro = HERO_STEP_S. ---- */
 const HH = [
   '.K.....K....',
@@ -15,14 +15,14 @@ const HH = [
   'KCCLSSSSEESK',
   '.KCLSSSSSSK.'];
 const HH2 = ['............', 'KK.....KKK..', 'KLK...KLLCK.'].concat(HH.slice(3));
-/* rosto de frente (susto), 10 de largura em x=3: olhos 2x2 arregalados, boca aberta 2x2 */
+/* rosto de frente (susto), 10 de largura em x=3: 1 linha de pele na testa, olhos 2x2 arregalados, boca aberta */
 const HF = [
   '.K......K.',
   'KLK....KLK',
   'KLCKKKKCLK',
+  'KSSSSSSSSK',
   'KSEESSEESK',
   'KSEESSEESK',
-  'KSSSKKSSSK',
   '.KSSKKSSK.'];
 const HS_paint = parts => {
   const g = Array.from({ length: 16 }, () => new Array(16).fill('.'));
@@ -52,11 +52,11 @@ const HS_LEG = {
     '....QQ.....PP...',
     '..NNN......OOO..',
     '...NN......OOOO.'],
-  pA: [10, // passagem: perto reta embaixo do corpo, longe dobrada com o pe erguido 2 px atras
+  pA: [10, // passagem: perto reta embaixo do corpo, longe dobrada com o pe erguido atras, canela inclinada
     '.....QQPPP......',
     '.....QQPP.......',
-    '..NNQQ.PP.......',
-    '......OOO.......',
+    '...NQQ.PP.......',
+    '...NN.OOO.......',
     '......OOOO......'],
   jump: [10, // perto encolhida (coxa horizontal), longe esticada para baixo
     '.....QQ.PPPP....',
@@ -101,33 +101,40 @@ const HS_ARM = {
   upR: ['..S', '.C.', 'C..'], upL: ['S..', '.C.', '..C'],
   side: ['SC', 'SC'], sideR: ['CS', 'CS'], grab: ['CS'], reach: ['.S', 'C.'], hi: ['S.', 'S.', 'C.', '.C'],
   /* desenhos prontos (ja com contorno), sem contorno automatico */
-  jumpR: ['.............KK.', '............KSSK', '............KSSK', '.............KCK', '..............CK',
-    '..............CK', '..............CK', '.............CCK', '.............KK.'],
+  jumpR: ['..............KK', '.............KSS', '.............KSS', '..............KC', '..............KC',
+    '..............KC', '.............KKC', '.............CCC', '.............KKK'],
+  skidL: ['.KK..', 'KSS..', 'KSS..', '.KKCK', '..KKC', '...KK'],
   dieV: ['K..............K', 'SK............KS', 'SK............KS', 'KC............CK', 'KC............CK',
     '.KCK........KCK.', '.KC..........CK.', '..K..........K..'],
 };
-const hsFrame = ({ head = HH, hx = 2, hy = 0, tx = 0, leg, arms = [], torso = HS_TORSO }) => {
+const HS_RAW = ['jumpR', 'dieV', 'skidL'];
+const hsFrame = ({ head = HH, hx = 2, hy = 0, tx = 0, leg, arms = [], torso = HS_TORSO, patch = {} }) => {
   const [y0, ...rows] = leg;
-  return HS_paint([
+  const g = HS_paint([
     [hsKeep(rows, 'QN'), 0, y0, true],
     [hsKeep(rows, 'PO'), 0, y0, 's'],
     [torso, tx, 7 + hy],
     [head, hx, hy],
-    ...arms.map(([a, x, y]) => [HS_ARM[a], x, y, HS_ARM[a][0].length < 16]),
+    ...arms.map(([a, x, y]) => [HS_ARM[a], x, y, !HS_RAW.includes(a)]),
     ...arms.map(([a, x, y]) => [HS_ARM[a], x, y]), // repinta as mangas por cima do contorno do outro braco
   ]);
+  for (const y in patch) g[y] = patch[y]; // linhas pintadas a mao
+  return g;
 };
 const ARMS_DN = [['dn', 3, 8], ['dn', 12, 8]];
 ROWS.h_stand = hsFrame({ leg: HS_LEG.stand, arms: ARMS_DN });
 ROWS.h_stand2 = hsFrame({ head: HH2, leg: HS_LEG.stand, arms: ARMS_DN });
 /* caminhada: no contato so a mao da frente aparece (a de tras fica atras do tronco); na passagem, uma mao */
-ROWS.h_w1 = hsFrame({ hy: 1, leg: HS_LEG.cA, arms: [['fw', 12, 9]] });
+/* contato: entre as pernas fica um triangulo de ceu (linhas 11-12 pintadas a mao) */
+const HS_CPATCH = { 11: '....KQQQKPPPKK..', 12: '...KQQK..KPPK...' };
+const HS_CPATCH_B = { 11: swapLegs([HS_CPATCH[11]])[0], 12: swapLegs([HS_CPATCH[12]])[0] };
+ROWS.h_w1 = hsFrame({ hy: 1, leg: HS_LEG.cA, arms: [['fw', 12, 9]], patch: HS_CPATCH });
 ROWS.h_w2 = hsFrame({ leg: HS_LEG.pA, arms: [['dn', 12, 7]] });
-ROWS.h_w3 = hsFrame({ hy: 1, leg: HS_LEG.cB, arms: [['fw', 12, 9]] });
+ROWS.h_w3 = hsFrame({ hy: 1, leg: HS_LEG.cB, arms: [['fw', 12, 9]], patch: HS_CPATCH_B });
 ROWS.h_w4 = hsFrame({ leg: HS_LEG.pB, arms: [['dn', 12, 7]] });
-ROWS.h_jump = hsFrame({ hx: 1, leg: HS_LEG.jump, arms: [['bk', 2, 8], ['jumpR', 0, 0]] });
+ROWS.h_jump = hsFrame({ leg: HS_LEG.jump, arms: [['bk', 2, 8], ['jumpR', 0, 0]] });
 ROWS.h_fall = hsFrame({ leg: HS_LEG.fall, arms: [['upL', 0, 5], ['upR', 13, 5]] });
-ROWS.h_skid = hsFrame({ hx: 4, tx: 2, leg: HS_LEG.skid, arms: [['hi', 3, 5], ['dn', 14, 8]] });
+ROWS.h_skid = hsFrame({ hx: 4, tx: 2, leg: HS_LEG.skid, arms: [['skidL', 0, 4], ['dn', 14, 8]] });
 ROWS.h_land = hsFrame({ hy: 2, leg: HS_LEG.land, arms: [['bk', 2, 10], ['fw', 12, 10]] });
 ROWS.h_climb1 = hsFrame({ hx: 1, tx: -1, leg: HS_LEG.climb1, arms: [['reach', 12, 6], ['grab', 12, 8]] });
 ROWS.h_climb2 = hsFrame({ hx: 1, tx: -1, leg: HS_LEG.climb2, arms: [['grab', 12, 7], ['fw', 12, 8]] });
@@ -136,7 +143,7 @@ ROWS.h_die2 = hsFrame({ head: HF, hx: 3, leg: HS_LEG.die, arms: [['dieV', 0, 1]]
 for (const k in ROWS) if (k.startsWith('h_') && (ROWS[k].length !== 16 || ROWS[k].some(r => r.length !== 16))) throw new Error('tamanho errado ' + k);
 
 const HERO = { K: '#1c1828', C: '#20a08c', L: '#9cf0d8', M: '#127060', S: '#fcc8a0', T: '#fcc8a0', B: '#fcc8a0', E: '#1c1828',
-  P: '#c0385c', Q: '#8c2450', O: '#f8f0e0', N: '#b0a490' };
+  P: '#c0385c', Q: '#8c2450', O: '#f8f0e0', N: '#f8f0e0' };
 PAL.hero = HERO;
 PAL.heroF = { ...HERO, C: '#e8401c', L: '#fcd860', M: '#981c10', P: '#fcf4e0', Q: '#c8b48c', O: '#fcd860', N: '#e8401c' };
 PAL.heroS1 = { ...HERO, C: '#f8b800', L: '#fcf0a0', M: '#b07000', P: '#e84010', Q: '#a02008', O: '#fcf0a0', N: '#f8b800' };

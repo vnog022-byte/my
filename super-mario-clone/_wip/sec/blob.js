@@ -13,9 +13,9 @@ const blobMask = (on, extra) => {
 /* formas (lx..rx, top, recuo por linha; base na linha 12): fx = x do olho da frente, a = linha de cima do
    olho da frente, drip = colunas onde a gosma cede 1 px abaixo da base (desligado: comia os pes) */
 const BLOB_SHAPE = {
-  c: { lx: 0, rx: 15, top: 3, ins: [2, 1, 0, 0, 0, 0, 0, 0, 0, 1], fx: 3, a: 4, drip: [] },
-  m: { lx: 1, rx: 14, top: 2, ins: [3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1], fx: 3, a: 4, drip: [] },
-  p: { lx: 1, rx: 14, top: 1, ins: [3, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1], fx: 4, a: 3, drip: [] } };
+  c: { lx: 0, rx: 15, top: 3, ins: [4, 2, 1, 0, 0, 0, 0, 0, 0, 1], fx: 3, a: 5, md: 4, drip: [] },
+  m: { lx: 1, rx: 14, top: 2, ins: [3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1], fx: 3, a: 4, md: 5, drip: [] },
+  p: { lx: 1, rx: 14, top: 1, ins: [3, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1], fx: 4, a: 3, md: 5, drip: [] } };
 const BLOB_CYCLE = ['c', 'm', 'p', 'm', 'c', 'm', 'p', 'm'];
 const blobBody = (i, ko) => {
   const s = BLOB_SHAPE[BLOB_CYCLE[i % 8]], prev = BLOB_SHAPE[BLOB_CYCLE[(i + 7) % 8]];
@@ -40,7 +40,7 @@ const BLOB_EYES = {
 const blobFace = (s, kind) => {
   const E = BLOB_EYES[kind], parts = [[['LL'], 6, s.top + 1]];
   if (kind === 'ko') parts.push([E[0], s.fx, s.a + 1], [E[1], 9, s.a + 1], [['KLLK'], 6, s.a + 6]);
-  else parts.push([E[0], s.fx, s.a], [E[1], 9, s.a], [['KKKK', 'KLLK'], s.fx + 3, s.a + 5]);
+  else parts.push([E[0], s.fx, s.a], [E[1], 9, s.a], [['KKKK', 'KLLK'], s.fx + 3, s.a + s.md]);
   return parts;
 };
 const BLOB_NEAR = ['.KKK.', 'KLLLK', 'KLLLK', '.KKK.'], BLOB_FAR = ['.KKK.', 'KBBBK', 'KBBBK', '.KKK.'];
