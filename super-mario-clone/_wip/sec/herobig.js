@@ -2,7 +2,7 @@
    Corpo em 3/4 de perfil, virado para a direita: braco de perto na frente do tronco, o de longe atras.
    Mesmas cores do heroi pequeno: K contorno, C/L moletom, S pele, P/Q calca (perto/longe), O/N tenis.
    Tudo e pintado em camadas por HB_paint; pernas, tenis, bracos e tronco ganham contorno K automatico
-   (a sola K e o contato com o chao), entao as pernas se separam pela forma e pelo contorno, nao pela cor.
+   (a sola K e o contato com o chao; o braco de perto, sobre o moletom, usa contorno suave M), entao as pernas se separam pela forma e pelo contorno, nao pela cor.
    Caminhada de 8 fases (uma perna desenhada; a outra e a mesma 4 fases depois):
    contato, carga (joelho em ">", quadril 1 px mais baixo), passagem (joelho livre a frente, pe erguido),
    impulso (tronco 1 px a frente) e o mesmo com as pernas trocadas. O calcanhar de apoio recua
@@ -14,7 +14,10 @@ const HB_paint = parts => {
     const on = (i, j) => j >= 0 && j < h && i >= 0 && i < w && rows[j][i] !== '.';
     const put = (X, Y, ch) => { if (X >= 0 && X < 16 && Y >= 0 && Y < 32 && Y >= y1 && Y <= y2) g[Y][X] = ch; };
     if (ol) for (let j = -1; j <= h; j++) for (let i = -1; i <= w; i++)
-      if (!on(i, j) && (on(i - 1, j) || on(i + 1, j) || on(i, j - 1) || on(i, j + 1))) put(i + x, j + y, 'K');
+      if (!on(i, j) && (on(i - 1, j) || on(i + 1, j) || on(i, j - 1) || on(i, j + 1))) {
+        const X = i + x, Y = j + y, under = X >= 0 && X < 16 && Y >= 0 && Y < 32 ? g[Y][X] : '.';
+        put(X, Y, ol === 's' && 'CLM'.includes(under) ? 'M' : 'K');
+      }
     rows.forEach((r, j) => { for (let i = 0; i < w; i++) if (r[i] !== '.') put(i + x, j + y, r[i]); });
   }
   return g.map(r => r.join(''));
@@ -77,7 +80,7 @@ const HB_BOB = [1, 2, 0, 0], HB_LEAN = [0, 0, 0, 1];
 const HB_frame = o => {
   const dy = o.dy || 0, dx = o.dx || 0, hy = 17 + dy, parts = [];
   const arm = (a, far) => { const [k, oy = 0] = [].concat(a);
-    return { rows: HB_ARM[k], x: dx + (far ? HB_FARX[k] || 0 : 0), y: (k in HB_ARMY ? HB_ARMY[k] : 8) + dy + oy, ol: true }; };
+    return { rows: HB_ARM[k], x: dx + (far ? HB_FARX[k] || 0 : 0), y: (k in HB_ARMY ? HB_ARMY[k] : 8) + dy + oy, ol: far ? true : 's' }; };
   if (o.aF) parts.push(arm(o.aF, true));
   parts.push({ rows: HB_HIP, x: dx > 0 ? 0 : dx, y: hy, ol: true, y1: hy });
   if (o.far) parts.push({ rows: HB_far(o.far), y: 18, ol: true, y1: hy + 2 });
