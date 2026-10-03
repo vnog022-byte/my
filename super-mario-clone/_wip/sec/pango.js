@@ -95,14 +95,14 @@ const PG_BALL = [
   '..KAAAAAAAAAAK..',
   '.KAKKAAKKAAKKAK.',
   '.KAAAKKAAKKAAAK.',
-  'KAAAAAAAAAAAAAAK',
   'KAAAAKKAAKKAAAAK',
-  'KAKKKAAKKAAKKAAK',
-  'KSSKAAAAAAAAKAAK',
-  'KAAKAAAKKAAAKAAK',
-  'KKAKAKKAAKKAKAAK',
-  '.KAAKAAAAAAKAKK.',
-  '.KAKAKKKKKKAAAK.',
+  'KAAKKAAKKAAKKAAK',
+  'KKKKAAAAAAAAKKKK',
+  'KSSKAAAKKAAAKAAK',
+  'KAAKAKKAAKKAKAAK',
+  'KAKKKAAAAAAKAAAK',
+  '.KAAAKAAAAKAAAK.',
+  '.KAAAAKKKKAAKAK.',
   '..KAAAAAKAAAAK..',
   '...KKAAAAAAKK...',
   '.....KKKKKK.....',
@@ -115,9 +115,9 @@ for (let i = 0; i < 4; i++) { ROWS['ball' + i] = pgLit(pgB); pgB = rot90(pgB); }
    fora do contorno e o olho meio fechado na borda; uma pata com garras fora do circulo, do outro lado.
    A bola treme 1px: quadros de 17px; ball_peek tem a bola na coluna 0 e ball_peek2 na coluna 1, e
    pangoSprite troca os dois quando o sprite vira, para a bola parada ficar sempre na coluna de ball0. */
-const PG_PEEK = ['...KKKK', '..KKAAK', '.KSSKSK', 'KSSSKSK', '.KKSSSK', '...KKK.'];
+const PG_PEEK = ['...KKKK', '..KAAAK', '.KSSKSK', 'KSSSKSK', '.KKKKKK'];
 const PG_PAW = ['..KK', '.KAAK', 'KKKKS'];
-const pgPeek = dx => compose(17, 16, [[ROWS.ball0, dx], [PG_PEEK, dx, 10], [PG_PAW, dx + 12, 13]]);
+const pgPeek = dx => compose(17, 16, [[ROWS.ball0, dx], [PG_PEEK, dx, 11], [PG_PAW, dx + 12, 13]]);
 ROWS.ball_peek = pgPeek(0);
 ROWS.ball_peek2 = pgPeek(1);
 function pangoSprite(e, tick, px) {
