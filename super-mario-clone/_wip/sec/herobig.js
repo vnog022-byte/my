@@ -42,9 +42,9 @@ const HB_ARM = {
   bk: ['.......CC.......', '.....CCC........', '....LL..........', '...SS...........', '...SS...........'],
   // pulo: punho (S) e punho da manga (L) acima da orelha, longe da cabeca (comeca na linha 0)
   // pulo (coordenadas finais para o tronco 1 px atras; use com avanco +1): punho KSSK em x=13-14 acima da orelha,
-  // braco vertical com 1 px de ceu ate a cabeca, descendo ao ombro so abaixo dela
-  up: ['.............SS.', '.............SS.', '.............LL.', '.............CC.', '.............CC.', '.............CC.', '.............CC.',
-    '...........CC...', '.........CCC....'],
+  // antebraco fino (1 px, em escorco) com 1 px de ceu ate a cabeca, descendo ao ombro so abaixo dela
+  up: ['.............SS.', '.............SS.', '.............LL.', '..............C.', '..............C.', '..............C.', '..............C.',
+    '............CC..', '..........CCC...'],
   // queda: bracos abertos para os lados na altura do ombro (silhueta em T)
   sideF: ['.......CCCCCLSS.', '.......CCCCCLSS.'],
   sideB: ['.SSLCCCC........', '.SSLCCCC........'],
@@ -99,7 +99,8 @@ const HB_frame = o => {
   if (o.aN) parts.push(arm(o.aN, false));
   const g = HB_paint(parts), r = hy + 2;
   // sem no KK na virilha: o canto do quadril some quando a perna logo ao lado ja tem contorno
-  if (g[r][4] === '.' && g[r][5] === 'K' && g[r][6] === 'K') g[r] = g[r].slice(0, 5) + '.' + g[r].slice(6);
+  const k = g[r].search(/\.KK/);
+  if (k >= 0 && g[r - 1][k + 1] === 'P') g[r] = g[r].slice(0, k + 1) + '.' + g[r].slice(k + 2);
   return g;
 };
 const HERO_WALK_B = ['w1', 'w2', 'w3', 'w4', 'w5', 'w6'], HERO_STEP_B = 4;

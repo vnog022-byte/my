@@ -76,11 +76,10 @@ const PG_WALK = ['pango_a', 'pango_c', 'pango_b', 'pango_d'];
 /* derrubado (de pe aqui; o jogo vira de ponta-cabeca): olho em X 3x3 cercado de S, boca aberta,
    barriga grande e patas afastadas e dobradas */
 ROWS.pango_x = compose(16, 24, [[PG_TAIL, 8, 15], [PG_ARMOR],
-  [['..KSSSK', '.KSSSSSK', '.KSSSSSK', '..KKKKK'], 3, 16],
-  [['.....KKKK..', '...KKSSSSK.', '..KSKSKSSK.', 'KKSSKSSSSK.', 'KSSKSKSSK..', '.KKKKSSK...', '..KSSSK....', '...KKK.....'], 0, 10],
-  [['KSSK.....', '.KSSK....', '..KSSK...'].reverse().map(r => r.padStart(9, '.')), 0, 19],
-  [['SKSSK', '.KSSK', 'SKKK.'], 0, 21],
-  [['KAAK', '.KAAK', '..KAAK', '...KAKS', '...KKK.', '....S..'], 9, 18]]);
+  [['..KSSSSK', '.KSSSSSK', '.KSSSSSK', '..KKKKK.'], 3, 16],
+  [['....KKKKK.', '..KKSSSSSK', '.KSSKSKSSK', 'KSSSSKSSSK', 'KSSSKSKSSK', '.KKKKSSSSK', '.KSSSKKKK.', '..KKK.....'], 0, 9],
+  [['...KSSK', '..KSSK.', '.KSSK..', 'SKKK...', '.S.....'], 2, 19],
+  [['KAAK...', '.KAAK..', '..KAAK.', '...KKKS', '.....S.'], 9, 19]]);
 
 /* bola: pangolim enrolado. Contorno limpo, 1px de folga, anel externo de 8 escamas em U (arco K, 1px S)
    e anel interno de 4 escamas deslocadas, nucleo com brilho. A ponta da cauda (S contra K, na borda) da a volta
@@ -109,7 +108,7 @@ let pgB = PG_BALL;
 for (let i = 0; i < 4; i++) { ROWS['ball' + i] = pgLit(pgB); pgB = rot90(pgB); }
 /* acordando: focinho espiando sob meia palpebra e 2 pezinhos com garra; a bola inteira treme 1px
    (quadros de 17px de largura para deslocar a bola com o contorno intacto) */
-const PG_PEEK = ['...KKK', '.KKAAK', 'KSSKSK', 'KKSKSK', '..KKKK'];
+const PG_PEEK = ['..KKKK.', '.KAAAAK', 'KSSSKSK', 'KKSSKSK', '.KKKKKK'];
 const PG_PAW = ['.KKK', 'SKKK'];
 const pgPeek = dx => compose(17, 16, [[ROWS.ball0, dx], [PG_PEEK, dx, 7], [PG_PAW, dx + 2, 14], [PG_PAW, dx + 10, 14]]);
 ROWS.ball_peek = pgPeek(0);

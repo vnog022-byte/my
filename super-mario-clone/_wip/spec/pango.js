@@ -2,17 +2,11 @@
 const SPEC_pg = o => Object.assign({ type: 'pango', state: 'walk', anim: 0, dir: -1, h: 24, x: 100, roll: 0, shellT: 0 }, o);
 const SPEC_pgAll = ['pango_a', 'pango_c', 'pango_b', 'pango_d', 'pango_x', 'ball0', 'ball1', 'ball2', 'ball3', 'ball_peek', 'ball_peek2'];
 
-/* LAB escamas */
-const PGT = { L1: ['ASAA', 'KAAK', 'AKKA'], L2: ['AASA', 'AAAA', 'KAAK', 'AKKA'], L3: ['ASAA', 'AAAA', 'KAAK', 'AKKA'], L4: ['SAAA', 'AAAK', 'KKKA'], L5: ['AASA', 'AAAA', 'KAAA', 'AKKK'] };
-for (const k in PGT) for (const y0 of [0, 1, 2]) ROWS['pgt_' + k + y0] = pgScaled(PG_DOME, PGT[k], y0);
-const PGT_ids = Object.keys(ROWS).filter(k => k.startsWith('pgt_'));
 var SPEC = {
   title: 'Pango (16x24 andando, bola 16x16) — secao pango',
   sizes: [['pango_a', 16, 24], ['pango_b', 16, 24], ['pango_c', 16, 24], ['pango_d', 16, 24], ['pango_x', 16, 24], ['ball0', 16, 16], ['ball1', 16, 16], ['ball2', 16, 16], ['ball3', 16, 16], ['ball_peek', 17, 16], ['ball_peek2', 17, 16]],
   grounded: ['pango_a', 'pango_c', 'pango_b', 'pango_d', 'ball0', 'ball1', 'ball2', 'ball3', 'ball_peek', 'ball_peek2'],
   groups: [
-    { title: 'LAB 6x', scale: 6, items: PGT_ids.map(k => [k, 'pango']) },
-    { title: 'LAB 2x', scale: 2, items: PGT_ids.map(k => [k, 'pango']) },
     { title: 'Andando: contato A, passagem, contato B, passagem; derrubado (10x)', scale: 10, items: [['pango_a', 'pango'], ['pango_c', 'pango'], ['pango_b', 'pango'], ['pango_d', 'pango'], ['pango_x', 'pango', false, true]] },
     { title: 'Bola: parada, girando (4), acordando (2) (10x)', scale: 10, items: ['ball0', 'ball1', 'ball2', 'ball3', 'ball_peek', 'ball_peek2'].map(k => [k, 'pango']) },
     { title: 'Todos (3x)', scale: 3, items: SPEC_pgAll.map(k => [k, 'pango']).concat([['pango_a', 'pango', true]]) },
