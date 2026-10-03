@@ -2,7 +2,7 @@
    Cores: K (contorno) + 3 cores no corpo de cada sprite (luz W, base, sombra D/O na borda de baixo/direita).
    Folha da maca e calice da pimenta usam um verde fixo como sub-paleta separada (como um tile NES de outra paleta).
    Animacao: brilho de 4 pontas na maca, reflexo/contorno "em brasa" na pimenta (pico curto),
-   coracao tum-tum (contrai -> estoura -> volta), ciclo creme->amarelo->laranja na estrela. ---- */
+   coracao tum-tum (contrai -> estoura -> volta), ciclo amarelo->creme->branco->creme->amarelo->laranja na estrela. ---- */
 ROWS.apple = [
   '...........KKK..',
   '........K.KGGGK.',
@@ -20,24 +20,24 @@ ROWS.apple = [
   '.KRRRRRRRRRRDDK.',
   '..KDDDDDDDDDDK..',
   '...KKKKKKKKKK...'];
-/* quadro de brilho: estrelinha de 4 pontas no ombro direito, separada do reflexo */
-ROWS.apple2 = compose(16, 16, [[ROWS.apple], [['.W.', 'WWW', '.W.'], 10, 6]]);
+/* quadro de brilho: cintilacao alongada (vertical 5px, horizontal 3px) cruzando o contorno do ombro direito */
+ROWS.apple2 = compose(16, 16, [[ROWS.apple], [['.W.', '.W.', 'WWW', '.W.', '.W.'], 13, 4]]);
 ROWS.chili = [
   '..KK............',
   '.KGGK...........',
   '..KGK...........',
-  '..KGGKKK........',
-  '.KGGGGGGK.......',
-  '.KKKKKKKK.......',
-  '.KRRRRRRRK......',
+  '..KGGKK.........',
+  '.KGGGGGK........',
+  '..KGGGGGK.......',
+  '.KGRRRRRGK......',
   '..KRRRRRRWK.....',
-  '...KRRRRRWWK....',
-  '....KRRRRRRDK...',
-  '.....KRRRRRRDK..',
-  '......KRRRRRDK..',
-  '.......KKRRRDK..',
-  '.........KRRDK..',
-  '.........KRDK...',
+  '...KRRRRRRWK....',
+  '....KRRRRRRWK...',
+  '.....KDRRRRRRK..',
+  '......KDRRRRRK..',
+  '.......KDRRRRK..',
+  '........KDRRRK..',
+  '.........KDDK...',
   '..........KK....'];
 /* coracao: normal (13 de largura), contraido (11) e estouro (15), todos com a ponta no chao */
 ROWS.heart = [
@@ -65,8 +65,8 @@ ROWS.heart2 = [
   '................',
   '................',
   '................',
-  '....KK...KK.....',
-  '...KRRK.KRRK....',
+  '...KKK...KKK....',
+  '..KRRRK.KRRRK...',
   '..KRWRRKRRRDK...',
   '..KRRRRKRRRDK...',
   '...KRRRRRRDK....',
@@ -94,15 +94,15 @@ ROWS.heart3 = [
 ROWS.star = [
   '.......KK.......',
   '......KYYK......',
-  '......KWYK......',
-  '.....KYWYYK.....',
-  '....KYYYYYOK....',
-  'KKKKKYYYYYYKKKKK',
+  '......KYYK......',
+  '.....KYYYYK.....',
+  '.KKKKYYYYYYKKKK.',
   'KYYYYYYYYYYYYYOK',
-  'KYYYYYKYYKYYYYOK',
-  '.KYYYYKYYKYYYOK.',
-  '..KYYYKYYKYYOK..',
+  '.KKYYYKYYKYYOKK.',
+  '...KYYKYYKYOK...',
+  '...KYYKYYKYOK...',
   '...KYYYYYYYOK...',
+  '..KYYYYYYYYYOK..',
   '..KYYYYKKYYYOK..',
   '.KYYYYK..KYYYOK.',
   '.KYYYK....KYYOK.',
@@ -110,15 +110,15 @@ ROWS.star = [
   'KKK..........KKK'];
 PAL.apple = { K: '#2c0c04', R: '#e02818', W: '#fcd8c8', D: '#a01008', G: '#48c838' };
 /* pimenta "em brasa": corpo, sombra e verde fixos; so o reflexo W e o contorno K esquentam */
-const CHILI = { K: '#3c0c08', R: '#d82010', W: '#f89048', D: '#881008', G: '#48c838' };
+const CHILI = { K: '#3c0c08', R: '#d82010', W: '#fc9c80', D: '#881008', G: '#48c838' };
 PAL.chili0 = CHILI;
-PAL.chili1 = { ...CHILI, K: '#5c1008', W: '#fcd860' };
-PAL.chili2 = { ...CHILI, K: '#7c1404', W: '#fcfcfc' };
+PAL.chili1 = { ...CHILI, K: '#7c1404', W: '#fcd860' };
+PAL.chili2 = { ...CHILI, K: '#c83800', W: '#fcfcfc' };
 PAL.heart = { K: '#3c0c20', R: '#f83878', W: '#fcd0e0', D: '#a8105c' };
-PAL.star0 = { K: '#5c3800', Y: '#f8d838', O: '#d88000', W: '#fcfcfc' };
-PAL.star1 = { K: '#5c3800', Y: '#fcf0a0', O: '#f8c838', W: '#fcfcfc' };
-PAL.star2 = { K: '#683000', Y: '#f8a830', O: '#c86410', W: '#fcfcb0' };
-PAL.star3 = { K: '#5c3800', Y: '#fcfcf0', O: '#f8e070', W: '#fcfcfc' };
+PAL.star0 = { K: '#5c3800', Y: '#f8d838', O: '#d88000' };
+PAL.star1 = { K: '#5c3800', Y: '#fcf0a0', O: '#f8c838' };
+PAL.star2 = { K: '#683000', Y: '#f8a830', O: '#c86410' };
+PAL.star3 = { K: '#5c3800', Y: '#fcfcf0', O: '#f8e070' };
 const CHILI_PULSE = [0, 0, 1, 2, 1, 0, 0, 0];
 /* tum-tum: contrai (2) -> estoura (3) -> volta (1), duas vezes, depois descanso */
 const HEART_BEAT = [2, 3, 1, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1];

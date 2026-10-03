@@ -34,8 +34,8 @@ ROWS.pango_a = pgWalk(PG_LEGS.a, 0);
 ROWS.pango_b = pgWalk(PG_LEGS.b, 1);
 ROWS.pango_c = ROWS.pango_a;
 
-/* bola (casco): placas separadas por linhas, brilho fixo no alto a esquerda; os 4 quadros de giro
-   giram so o desenho das placas (rot90) e reaplicam a luz. */
+/* bola (casco): pangolim enrolado com fileiras de escamas em U, brilho fixo no alto a esquerda; os 4 quadros de giro
+   giram so as escamas (rot90) e reaplicam a luz. ball_peek/ball_peek2 = acordando (focinho e pezinhos). */
 const PG_BALL = [
   '.....KKKKKK.....',
   '...KKAAAAAAKK...',
