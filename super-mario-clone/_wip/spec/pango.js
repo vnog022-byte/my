@@ -1,11 +1,27 @@
 /* folha da secao pango: pangolim 16x24 andando e bola 16x16 */
 const SPEC_pg = o => Object.assign({ type: 'pango', state: 'walk', anim: 0, dir: -1, h: 24, x: 100, roll: 0, shellT: 0 }, o);
 const SPEC_pgAll = ['pango_a', 'pango_b', 'pango_x', 'ball0', 'ball1', 'ball2', 'ball3', 'ball_peek', 'ball_peek2'];
+
+/* LAB: padroes de escama */
+const PGT = {
+  p1: ['SAAK', 'AAAK', 'KKAK'.replace(/./g,(c,i)=>'AKKA'[i])],
+  p2: ['KSSK', 'AKKA'],
+  p3: ['SAAA', 'AAAA', 'KAAK', 'AKKA'],
+  p4: ['SSAK', 'SAAK', 'AAAK', 'KKKA'],
+  p5: ['ASSA', 'AAAA', 'KAAK', 'AKKA'],
+};
+for (const k in PGT) {
+  const t = PGT[k], th = t.length, rows = [];
+  for (let y = 0; y < 16; y++) { let r = ''; for (let x = 0; x < 16; x++) { const band = Math.floor(y / th); const xx = (x + (band % 2) * 2) % 4; const d = Math.hypot(x - 7.5, y - 7.5); r += d > 7.6 ? '.' : d > 6.6 ? 'K' : t[y % th][xx]; } rows.push(r); }
+  ROWS['pgt_' + k] = rows;
+}
 var SPEC = {
   title: 'Pango (16x24 andando, bola 16x16) — secao pango',
   sizes: [['pango_a', 16, 24], ['pango_b', 16, 24], ['pango_c', 16, 24], ['pango_x', 16, 24], ['ball0', 16, 16], ['ball1', 16, 16], ['ball2', 16, 16], ['ball3', 16, 16], ['ball_peek', 16, 16], ['ball_peek2', 16, 16]],
   grounded: ['pango_a', 'pango_b', 'ball0', 'ball1', 'ball2', 'ball3', 'ball_peek', 'ball_peek2'],
   groups: [
+    { title: 'LAB escamas', scale: 8, items: Object.keys(PGT).map(k => ['pgt_' + k, 'pango']) },
+    { title: 'LAB 1x', scale: 1, items: Object.keys(PGT).map(k => ['pgt_' + k, 'pango']) },
     { title: 'Andando A/B e derrubado (10x)', scale: 10, items: [['pango_a', 'pango'], ['pango_b', 'pango'], ['pango_x', 'pango', false, true]] },
     { title: 'Bola: parada, girando (4), acordando (2) (10x)', scale: 10, items: ['ball0', 'ball1', 'ball2', 'ball3', 'ball_peek', 'ball_peek2'].map(k => [k, 'pango']) },
     { title: 'Todos (3x)', scale: 3, items: SPEC_pgAll.map(k => [k, 'pango']).concat([['pango_a', 'pango', true]]) },

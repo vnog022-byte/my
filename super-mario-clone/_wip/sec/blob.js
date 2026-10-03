@@ -1,7 +1,7 @@
 /* ---- Gosma (16x16, olhando para a esquerda; flip quando anda para a direita).
    Paleta de 3 cores: K=contorno/pupila B=corpo L=claro (olho, pe, brilho).
    Caminhada de perfil: 8 quadros, 1 a cada 4 ticks (= 2 px a 0,5 px/tick). O pe apoiado recua 2 px por
-   quadro (nao patina) enquanto o outro volta pelo ar; corpo sobe 1 px no meio do apoio. ---- */
+   quadro (nao patina) enquanto o outro volta pelo ar; corpo desce 1 px nos quadros de contato (pes abertos). Pes ficam atras do corpo; pe perto=claro, pe longe=roxo. ---- */
 const BLOB_BODY = [
   '.......K........',
   '......KBKK......',
@@ -16,7 +16,7 @@ const BLOB_BODY = [
   '.KBBBKKKKBBBBBK.',
   '..KBBBLBBBBBBK..',
   '...KKKKKKKKKK...'];
-const BLOB_NEAR = ['.KKK.', 'KLLLK', 'KLLLK', 'KKKKK'], BLOB_FAR = ['.KKK.', 'KKKKK', 'KKKKK', 'KKKKK'];
+const BLOB_NEAR = ['..KKK.', '.KLLLK', 'KLLLLK', 'KKKKKK'], BLOB_FAR = ['..KKK.', '.KBBBK', 'KBBBBK', 'KKKKKK'];
 const BLOB_PX = [1, 3, 5, 7, 8, 6, 4, 2], BLOB_LIFT = [0, 0, 0, 0, 1, 2, 2, 1];
 const blobWalk = (i, eyes) => {
   const a = i % 8, b = (i + 4) % 8, bob = a % 4 === 0 ? 1 : 0;
@@ -29,18 +29,20 @@ const BLOB_BLINK = BLOB_BODY.map((r, y) => y === 6 || y === 7 ? 'KBBBBBBBBBBBBBB
 for (let i = 0; i < 8; i++) { ROWS['blob_w' + i] = blobWalk(i); ROWS['blob_w' + i + '_b'] = blobWalk(i, BLOB_BLINK); }
 ROWS.blob_n = ROWS.blob_w0; ROWS.blob_sq = ROWS.blob_w2; ROWS.blob_st = ROWS.blob_w6;
 ROWS.blob_n_b = ROWS.blob_w0_b; ROWS.blob_sq_b = ROWS.blob_w2_b; ROWS.blob_st_b = ROWS.blob_w6_b;
-/* esmagada: achatada, olhos espremidos (fechados em X) */
+/* esmagada: achatada como uma poca, olhos espremidos e pezinhos abertos para os lados */
 ROWS.blob_flat = [
   '................', '................', '................', '................', '................', '................',
-  '................', '................', '................', '................', '................',
-  '....KKKKKKKK....',
-  '..KKBLLBBBBBKK..',
-  '.KBKLKBBKLKBBBK.',
-  'KBBBBBBBBBBBBBBK',
-  '.KKKKKKKKKKKKKK.'];
-/* derrubada (casco/bloco/fogo): olhos em X, pes para cima — desenhada de pe e virada com vflip */
-ROWS.blob_ko = compose(16, 16, [
-  [BLOB_FAR, 9, 13], [BLOB_BODY.map((r, y) => y === 8 ? 'KBKLKBBBKLKBBBBK' : y === 9 ? 'KBLKLBBBLKLBBBBK' : y === 7 ? 'KBBBBBBBBBBBBBK.' : r), 0, 1], [BLOB_NEAR, 3, 13]]);
+  '................', '................', '................', '................',
+  '.....KKKKKK.....',
+  '...KKBLLBBBKK...',
+  '.KKBLLBBBBBBBKK.',
+  'KBBBKBBBBBBKBBBK',
+  'KBBBBKKBBKKBBBBK',
+  'KLLKKKKKKKKKKLLK'];
+/* derrubada (casco/bloco/fogo): olhos em X e boca aberta, pes juntos — desenhada de pe e virada com vflip */
+const BLOB_KO_FACE = { 5: 'KBBBBBBBBBBBBBBK', 6: 'KBKLKBBBKLKBBBBK', 7: 'KBLKLBBBLKLBBBBK', 8: 'KBKLKBBBKLKBBBBK', 9: 'KBBBBBBBBBBBBBBK',
+  10: '.KBBBBKKBBBBBBK.', 11: '..KBBKLLKBBBBK..' };
+ROWS.blob_ko = compose(16, 16, [[BLOB_FAR, 10, 12], [BLOB_NEAR, 0, 12], [BLOB_BODY.map((r, y) => BLOB_KO_FACE[y] || r)]]);
 PAL.blob = { K: '#2c1040', B: '#a048d8', L: '#f8d8f8' };
 const BLOB_WALK = ['blob_w0', 'blob_w1', 'blob_w2', 'blob_w3', 'blob_w4', 'blob_w5', 'blob_w6', 'blob_w7'], BLOB_STEP = 4;
 function blobSprite(e, tick) {

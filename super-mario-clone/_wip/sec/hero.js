@@ -7,8 +7,8 @@
    O pe de apoio anda 4-5 px para tras por quadro = HERO_STEP_S, entao nao patina. ---- */
 const HH = [
   '.K......K...',
-  'KCK....KCK..',
-  'KCCKKKKKCCK.',
+  'KLK....KLK..',
+  'KCLKKKKKCLK.',
   'KCCCLLLLLLCK',
   'KCCLSSSSESSK',
   'KCCLSSSSESSK',
@@ -24,12 +24,11 @@ const HF = [
   '..KCLLLLLLLLCK..'];
 /* blocos de baixo: comecam na linha 7+dy da cabeca e vao ate a linha 15 */
 const LO = {
-  stand: [
+  stand: [ // dy=1
     '...KCCCCCCCCK...',
     '...SKCCCCCCKS...',
     '....KLLLLLLK....',
     '....KPPPPPPK....',
-    '.....QQ..PP.....',
     '.....QQ..PP.....',
     '.....QQ..PP.....',
     '.....NN..OO.....',
@@ -42,7 +41,7 @@ const LO = {
     '....QQ....PP....',
     '...QQ......PP...',
     '..NN.......OO...',
-    '..NNNN.....OOOO.'],
+    '...NNN.....OOOO.'],
   pA: [ // passagem: P reta embaixo do corpo, Q dobrada com o pe no ar
     '...KCCCCCCCCK...',
     '...SKCCCCCCKT...',
@@ -50,8 +49,8 @@ const LO = {
     '....KPPPPPPK....',
     '......PPQQ......',
     '......PP.QQ.....',
-    '......PP.NN.....',
-    '......OO.NNNN...',
+    '......PP.NNN....',
+    '......OO........',
     '......OOOO......'],
   jump: [
     '...KCCCCCCCCK...',
@@ -126,8 +125,8 @@ const swapArms = rows => recolor(rows, { S: 'T', T: 'S' });
 LO.cB = swapArms(swapLegs(LO.cA)); LO.pB = swapArms(swapLegs(LO.pA));
 const ARM_UP_R = [['..S', '..S', '.CK', 'C..'], 12, 4], ARM_UP_L = [['S...', 'S...', '.C..', '..CC'], 0, 4];
 const small = (head, hx, lo, dy = 0, extra = []) => compose(16, 16, [[head, hx, dy], [lo, 0, 7 + dy], ...extra]);
-ROWS.h_stand = small(HH, 2, LO.stand);
-ROWS.h_stand2 = small(HH2, 2, LO.stand);
+ROWS.h_stand = small(HH, 2, LO.stand, 1);
+ROWS.h_stand2 = small(HH2, 2, LO.stand, 1);
 ROWS.h_w1 = small(HH, 2, LO.cA, 1);
 ROWS.h_w2 = small(HH, 2, LO.pA);
 ROWS.h_w3 = small(HH, 2, LO.cB, 1);
