@@ -25,23 +25,24 @@ const HB_paint = parts => {
   }
   return g.map(r => r.join(''));
 };
-/* cabeca propria do heroi grande (14x10, em x=1): mesmo desenho da HH (capuz com orelhas, borda clara do capuz,
-   olho com brilho perto do focinho), mas maior: orelhas de 4 linhas, rosto de 4 linhas e queixo; olho 2x3 com brilho */
+/* cabeca propria do heroi grande (15x10, em x=1): mesmo personagem da HH (capuz com orelhas, borda clara do capuz,
+   olho com brilho L), redesenhada maior: costas do capuz em M (volume), olho 2x3 com brilho no canto de cima,
+   focinho de 1 px a frente (linha 7) e queixo arredondado, com a borda clara do capuz recuando 1 px embaixo */
 const HB_HEAD = [
-  '.K......K.....',
-  'KLK....KLK....',
-  'KLCK...KLCK...',
-  'KLCCK..KLCCK..',
-  'KCCCCKKCCCCCK.',
-  'KCCCLSSSSSSSSK',
-  'KCCCLSSSSSESSK',
-  'KCCCLSSSSSEESK',
-  'KCCCLSSSSSEESK',
-  '.KCCLSSSSSSSK.'];
+  '.K......K......',
+  'KLK....KLK.....',
+  'KLCK...KLCK....',
+  'KLCCK..KLCCK...',
+  'KCCCCKKCCCCCK..',
+  'KMCCLSSSSSSSK..',
+  'KMCCLSSSSELSK..',
+  'KMCCLSSSSEESSK.',
+  'KMCCLSSSSEESK..',
+  '.KMCCLSSSSSK...'];
 /* orelha mexendo (equivale a HH2): a orelha da frente dobra para a frente */
-const HB_HEAD2 = ['.K............', 'KLK.....KKK...', 'KLCK...KLLCK..', 'KLCCK..KLCCCK.'].concat(HB_HEAD.slice(4));
-/* tronco (preenchimento, linhas 10-17): costas a esquerda, peito a direita, barra clara inteira */
-const HB_TORSO = ['.....CCCCCC.....', '....CCCCCCCC....', '....CCCCCCCC....', '.....CCCCCCC....', '.....CCCCCCC....',
+const HB_HEAD2 = ['.K.............', 'KLK.....KKK....', 'KLCK...KLLCK...', 'KLCCK..KLCCCK..'].concat(HB_HEAD.slice(4));
+/* tronco (preenchimento, linhas 10-17): ombros largos sob a cabeca, afinando ate a barra clara inteira */
+const HB_TORSO = ['....CCCCCCCC....', '...CCCCCCCCCC...', '...CCCCCCCCCC...', '....CCCCCCCC....', '.....CCCCCCC....',
   '.....CCCCCC.....', '.....CCCCCC.....', '.....LLLLLL.....'];
 const HB_HIP = ['.....PPPPPP.....', '.....PPPPPP.....'];
 /* bracos (preenchimento a partir da linha 12, o ombro; x=7-8). b = para tras, f = para frente; a mao acaba na linha 16 */
@@ -53,13 +54,14 @@ const HB_ARM = {
   f1: ['.......CC.......', '........CC......', '.........LL.....', '.........SS.....', '.........SS.....'],
   f2: ['.......CC.......', '........CCC.....', '..........LL....', '...........SS...', '...........SS...'],
   thr: ['.......CCCCLSS..', '.......CCCCLSS..'],
-  // pulo (coordenadas finais para corpo 2 px abaixo e tronco 1 px atras; use com [up, -2, 1]): punho KSSK acima
-  // da cabeca, braco descendo na frente da borda do rosto (sem tapar o olho) ate o ombro
-  up: ['.............SS.', '.............SS.', '.............LL.', '.............CC.', '.............CC.', '.............CC.', '.............CC.',
-    '.............CC.', '.............CC.', '.............CC.', '.............CC.', '............CC..', '...........CC...', '.........CCC....'],
+  // pulo (coordenadas finais para corpo 2 px abaixo e tronco 1 px atras; use com [up, -2, 1]): punho KSSK acima da
+  // orelha, antebraco em diagonal com o cotovelo abrindo em x=14-15 e 1 px de ceu ate a cabeca; o resto do braco
+  // passa por tras da cabeca (desenhado antes dela)
+  up: ['............SS..', '............SS..', '............LL..', '.............CC.', '..............CC', '..............CC',
+    '.............CC.', '............CC..'],
   // queda: bracos abertos para os lados na altura do ombro (silhueta em T)
   sideF: ['.......CCCCCLSS.', '.......CCCCCLSS.'],
-  sideB: ['.SSLCCCC........', '.SSLCCCC........'],
+  sideB: ['.SSCCCCC........', '.SSCCCCC........'],
   // derrapagem (coordenadas finais para o tronco 2 px atras; use com avanco +2): braco esticado para a frente,
   // descendo do ombro ate a altura do peito, contra o movimento
   brk: ['.....CC.........', '......CCC.......', '........CCL.....', '..........SS....', '..........SS....'],
@@ -68,7 +70,7 @@ const HB_ARM = {
 };
 const HB_ARMY = { up: 0 };
 /* deslocamento do braco de longe (fica atras do tronco; so aparece o que sai da silhueta) */
-const HB_FARX = { b1: -3, b2: -1, f1: 3, f2: 2, dn: 0, grip: 1, thr: 2, bk: 0, sideB: 0 };
+const HB_FARX = { b1: -3, b2: -1, f1: 3, f2: 2, dn: 0, grip: 2, thr: 2, bk: 0, sideB: 0 };
 /* pernas: preenchimento das linhas 18-30 (o quadril cobre o topo; a linha 31 e a sola automatica).
    HB_leg([[ate_linha, x], ...], [[linha, x0, x1], ...]): perna de 2 px na coluna x ate a linha dada, depois o tenis. */
 const HB_leg = (segs, shoe) => {
@@ -95,7 +97,8 @@ const HB_LEG = [
 const HB_far = rows => recolor(rows, { P: 'Q', O: 'N' });
 const HB_BOB = [1, 0, 0];
 /* monta um quadro. o: { near, far (pernas, linhas 18-30), dy (corpo desce), dx (tronco/quadril),
-   hx (cabeca alem do tronco), aN/aF (bracos de perto/longe: nome em HB_ARM ou [nome, desce, avanca]), head } */
+   hx (cabeca alem do tronco), aN/aF (bracos de perto/longe: nome em HB_ARM ou [nome, desce, avanca]),
+   aU (braco de perto que passa por tras da cabeca), head } */
 const HB_frame = o => {
   const dy = o.dy || 0, dx = o.dx || 0, hy = 18 + dy, parts = [];
   const arm = (a, far) => {
@@ -107,12 +110,16 @@ const HB_frame = o => {
   if (o.far) parts.push({ rows: HB_far(o.far), y: 18, ol: true, y1: hy + 2 });
   if (o.near) parts.push({ rows: o.near, y: 18, ol: true, y1: hy + 2 });
   parts.push({ rows: HB_TORSO, x: dx, y: 10 + dy, ol: true, y2: 17 + dy });
+  if (o.aU) parts.push({ ...arm(o.aU, false), ol: true });
   parts.push({ rows: o.head || HB_HEAD, x: 1 + dx + (o.hx || 0), y: dy });
   if (o.aN) parts.push(arm(o.aN, false));
   const g = HB_paint(parts), r = hy + 2;
   // sem no KK na virilha: o canto do quadril some quando a perna logo ao lado ja tem contorno
   const k = g[r].search(/\.KK/);
   if (k >= 0 && g[r - 1][k + 1] === 'P') g[r] = g[r].slice(0, k + 1) + '.' + g[r].slice(k + 2);
+  // KKK entre as duas pernas: o K do meio (contorno de baixo do quadril) vira ceu
+  const m = g[r].search(/[PQ]KKK[PQ]/);
+  if (m >= 0 && g[r - 1][m + 2] === 'P') g[r] = g[r].slice(0, m + 2) + '.' + g[r].slice(m + 3);
   return g;
 };
 const HERO_WALK_B = ['w1', 'w2', 'w3', 'w4', 'w5', 'w6'], HERO_STEP_B = 4;
@@ -139,13 +146,13 @@ ROWS.H_stand2_t = HB_frame({ ...HB_STAND, aN: 'thr', head: HB_HEAD2 });
 const HB_JUMP_N = ['........PP......', '........PP......', '........PP......', '.........PPPP...', '..........PPP...', '..........PP....', '.........PP.....',
   '.........OOO....', '.........OOOO...', '................', '................', '................', '................'];
 const HB_JUMP_F = HB_leg([[22, 6], [24, 5], [26, 4], [27, 3]], [[28, 2, 3], [29, 2, 4], [30, 3, 4]]);
-ROWS.H_jump = HB_frame({ near: HB_JUMP_N, far: HB_JUMP_F, dy: 2, dx: -1, aN: ['up', -2, 1], aF: 'b2' });
-ROWS.H_jump_t = HB_frame({ near: HB_JUMP_N, far: HB_JUMP_F, dy: 2, dx: -1, aN: ['thr', 0, 1], aF: 'b2' });
+ROWS.H_jump = HB_frame({ near: HB_JUMP_N, far: HB_JUMP_F, dy: 2, dx: -1, aU: ['up', -2, 1], aF: ['b2', 0, 1] });
+ROWS.H_jump_t = HB_frame({ near: HB_JUMP_N, far: HB_JUMP_F, dy: 2, dx: -1, aN: ['thr', 0, 1], aF: ['b2', 0, 1] });
 /* queda: braco da frente aberto para cima, o de tras inteiro atras do corpo; pernas bem abertas para baixo */
 const HB_FALL_N = HB_leg([[23, 9], [28, 10]], [[29, 10, 12], [30, 11, 13]]);
 const HB_FALL_F = HB_leg([[27, 6]], [[28, 6, 8], [29, 7, 9]]);
-ROWS.H_fall = HB_frame({ near: HB_FALL_N, far: HB_FALL_F, hx: -1, aN: 'sideF', aF: 'sideB' });
-ROWS.H_fall_t = HB_frame({ near: HB_FALL_N, far: HB_FALL_F, hx: -1, aN: ['thr', 1], aF: 'sideB' });
+ROWS.H_fall = HB_frame({ near: HB_FALL_N, far: HB_FALL_F, hx: -1, aN: 'sideF', aF: ['sideB', 1] });
+ROWS.H_fall_t = HB_frame({ near: HB_FALL_N, far: HB_FALL_F, hx: -1, aN: ['thr', 1], aF: ['sideB', 1] });
 /* derrapagem: tronco 2 px e cabeca 1 px para tras, perna da frente esticada e fincada (ponta para cima),
    a de tras dobrada embaixo do corpo, bracos abertos (o da frente para cima) */
 const HB_SKID_N = HB_leg([[20, 8], [22, 9], [25, 10], [28, 11]], [[29, 11, 14], [30, 11, 13]]);
