@@ -48,12 +48,12 @@ const HB_LEG = [
   // 4 saida: so a ponta do pe no chao, calcanhar levantado
   ['......PPPP......', '......PPPP......', '.....PPPP.......', '.....PPP........', '....PPP.........', '....PPP.........',
    '...PPP..........', '...PPP..........', '..PPP...........', '.OOOO...........', 'KOOOOO..........', '..KKKK..........'],
-  // 5 balanco: joelho dobra, pe sai do chao atras
+  // 5 balanco: pe sai do chao e passa por baixo do corpo, ponta para baixo
   ['......PPPP......', '......PPPP......', '......PPPP......', '......PPP.......', '......PPP.......', '.....PPP........',
-   '....PPP.........', '...PPP..........', '..OOOO..........', '..KOOOO.........', '...KKKK.........', '................'],
-  // 6 passagem (balanco): joelho a frente, canela para tras, pe levantado atras da perna de apoio
-  ['.......PPPP.....', '........PPPP....', '........PPPP....', '.........PPPP...', '........PPPP....', '.......PPP......',
-   '......PPP.......', '.....PPP........', '....OOOO........', '....KOOOO.......', '.....KKKK.......', '................', '................'],
+   '....PPP.........', '...OOOO.........', '...KOOOO........', '....KKKK........', '................', '................'],
+  // 6 passagem (balanco): joelho sobe a frente, pe pendurado acima do pe de apoio
+  ['.......PPPP.....', '........PPPP....', '.........PPPP...', '.........PPPP...', '.........PPP....', '.........PPP....',
+   '........PPP.....', '........OOOO....', '........OOOOO...', '........KKKKK...', '................', '................', '................'],
   // 7 alcance: perna se estica a frente, pe 1 px acima do chao
   ['.......PPPP.....', '........PPPP....', '........PPPP....', '.........PPPP...', '.........PPPP...', '..........PPP...',
    '..........PPP...', '..........PPP...', '..........PPP...', '..........OOOO..', '..........OOOOO.', '..........KKKKK.', '................'],

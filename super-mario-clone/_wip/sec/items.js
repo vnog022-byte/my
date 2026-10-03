@@ -26,17 +26,17 @@ ROWS.chili = [
   '..KK............',
   '.KGGK...........',
   '..KGK...........',
-  '..KGGKK.........',
-  '.KGGGGGK........',
+  '..KGGKKK........',
   '.KGGGGGGK.......',
   '.KKKKKKKK.......',
   '.KRRRRRRRK......',
-  '..KRRRRWWRK.....',
+  '..KRRRRRRWK.....',
   '...KRRRRRWWK....',
   '....KRRRRRRDK...',
   '.....KRRRRRRDK..',
-  '......KKRRRRDK..',
-  '........KRRRDK..',
+  '......KRRRRRDK..',
+  '.......KKRRRDK..',
+  '.........KRRDK..',
   '.........KRDK...',
   '..........KK....'];
 /* coracao: normal (13 de largura), contraido (11) e estouro (15), todos com a ponta no chao */
@@ -122,7 +122,7 @@ PAL.star3 = { K: '#5c3800', Y: '#fcfcf0', O: '#f8e070', W: '#fcfcfc' };
 const CHILI_PULSE = [0, 0, 1, 2, 1, 0, 0, 0];
 /* tum-tum: contrai (2) -> estoura (3) -> volta (1), duas vezes, depois descanso */
 const HEART_BEAT = [2, 3, 1, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1];
-const STAR_CYCLE = [3, 1, 0, 2, 0, 1];
+const STAR_CYCLE = [0, 1, 3, 1, 0, 2];
 function itemSprite(it, tick) {
   if (it.type === 'grow') return { id: tick % 64 < 6 ? 'apple2' : 'apple', pal: 'apple' };
   if (it.type === 'fire') return { id: 'chili', pal: 'chili' + CHILI_PULSE[Math.floor(tick / 3) % 8] };
