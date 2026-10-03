@@ -46,10 +46,10 @@ const BLOB_FACE_BLINK = [
   '....BBB...BBB...',
   BLOB_FACE[4], BLOB_FACE[5]];
 const BLOB_FACE_KO = [
-  '....K..K.K..K...',
-  '.....KK...KK....',
-  '.....KK...KK....',
-  '....K..K.K..K...',
+  '...K..K..K..K...',
+  '....KK....KK....',
+  '....KK....KK....',
+  '...K..K..K..K...',
   '......KKKK......',
   '......KLLK......'];
 const BLOB_NEAR = ['.KKK.', 'KLBBK', 'KBBBK', '.KKK.'], BLOB_FAR = ['.KKK.', 'KBKKK', 'KKKKK', '.KKK.'];
@@ -68,9 +68,9 @@ ROWS.blob_n = ROWS.blob_w0; ROWS.blob_sq = ROWS.blob_w2; ROWS.blob_st = ROWS.blo
 ROWS.blob_n_b = ROWS.blob_w0_b; ROWS.blob_sq_b = ROWS.blob_w2_b; ROWS.blob_st_b = ROWS.blob_w6_b;
 /* esmagada: poca fechada com contorno, olhos "> <" e respingos dos dois lados */
 ROWS.blob_flat = compose(16, 16, [
-  [blobMask((x, y) => (y === 11 && x >= 5 && x <= 10) || (y === 12 && x >= 3 && x <= 12) || (y === 13 && x >= 1 && x <= 14) || y >= 14
+  [blobMask((x, y) => (y === 11 && x >= 4 && x <= 11) || (y === 12 && x >= 2 && x <= 13) || (y === 13 && x >= 1 && x <= 14) || y >= 14
     || (Math.abs(x - 1) + Math.abs(y - 9) <= 1) || (Math.abs(x - 14) + Math.abs(y - 8) <= 1))],
-  [['K....K', '.K..K.', 'K....K'], 5, 12], [['LL'], 7, 12], [['L'], 3, 13]]);
+  [['K....K', '.K..K.', 'K....K'], 5, 12], [['L'], 3, 13], [['KK'], 7, 14]]);
 /* derrubada (casco/bloco/fogo): olhos em X cheio, boca aberta, pes juntos na base — virada com vflip */
 ROWS.blob_ko = compose(16, 16, [[BLOB_FAR, 8, 12], [BLOB_NEAR, 3, 12], [blobBody(1, true)], [BLOB_FACE_KO, 0, 5], [['LL', 'L'], 3, 3]]);
 PAL.blob = { K: '#000000', B: '#8000f0', L: '#fcc4fc' };
