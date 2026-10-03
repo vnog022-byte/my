@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Painel de sprites - Super Mario clone</title>
+<style>
+  :root{--bg:#14161c;--card:#1d2029;--line:#2e3340;--fg:#e8eaf0;--mute:#9aa1b2;--acc:#fcc43c}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,sans-serif}
+  header{padding:16px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:2}
+  h1{font-size:18px;margin:0 8px 0 0}
+  label{display:flex;align-items:center;gap:8px;color:var(--mute)}
+  input[type=range]{width:140px}
+  select,button{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:inherit}
+  button{cursor:pointer}
+  main{padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+  .card h2{font-size:14px;margin:0}
+  .card p{margin:0;color:var(--mute);font-size:12px}
+  .stage{background:#5c94fc;border-radius:6px;display:flex;align-items:flex-end;justify-content:center;height:190px;padding-bottom:8px}
+  canvas{image-rendering:pixelated}
+  .strip{display:flex;gap:4px;flex-wrap:wrap;align-items:flex-end}
+  .strip canvas{background:#5c94fc;border:2px solid transparent;border-radius:3px}
+  .strip canvas.on{border-color:var(--acc)}
+  .tag{font-size:11px;color:var(--mute)}
+  @media (max-width:520px){main{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Painel de sprites</h1>
+  <label>Velocidade do Mario <input id="vx" type="range" min="0" max="2.5" step="0.1" value="1.5"><span id="vxv">1.5</span></label>
+  <label>Zoom <select id="zoom"><option value="4">4x</option><option value="5" selected>5x</option><option value="6">6x</option></select></label>
+  <label><input id="flip" type="checkbox"> Espelhar</label>
+  <button id="pause">Pausar</button>
+</header>
+<main id="grid"></main>
+<script>
+/* copia dos dados de sprites do index.html */
+const norm = rows => rows.map(r => r.padEnd(16, '.').slice(0, 16));
+/* Mario pequeno (16x16): R=camisa/bone, B=macacao/cabelo/sapato, S=pele, Y=botao */
+const MBODY = [
+  '.....RRRRR......', '....RRRRRRRRR...', '....BBBSSBS.....', '...BSBSSSBSSS...', '...BSBBSSSBSSS..',
+  '...BBSSSSBBBB...', '.....SSSSSSS....', '....RRBRRR......', '...RRRBRRBRRR...', '..RRRRBBBBRRRR..',
+  '..SSRBYBBYBRSS..', '..SSSBBBBBBSSS..', '..SSBBBBBBBBSS..'];
+const MLEGS = {
+  stand: ['...BBBB..BBBB...', '..BBBBB..BBBBB..', '..BBBBB..BBBBB..'],
+  w1: ['...BBBBB.BBB....', '..BBBBBBB.BBB...', '.BBBB.......BBB.'],
+  w2: ['....BBBBBBB.....', '....BBBBBBBB....', '....BBBB.BBBB...'],
+  w3: ['....BBB.BBBBB...', '...BBB..BBBBBB..', '..BBB.....BBBB..'],
+};
+const MJUMP = MBODY.slice(0, 7).concat([
+  '....RRBRRR..SS..', '...RRRBRRBRSSS..', '..RRRRBBBBRSSS..', '..SSRBYBBYBRR...', '.SSSBBBBBBBRR...',
+  '.SS.BBBBBBBBB...', '....BBBBBBBBBB..', '...BBBB..BBBBB..', '...BBB....BBBB..']);
+const ROWS = {};
+for (const k in MLEGS) ROWS['m_' + k] = norm(MBODY.concat(MLEGS[k]));
+ROWS.m_jump = norm(MJUMP);
+
+/* Mario grande (16x32) */
+const BHEAD = [
+  '.....RRRRR......', '....RRRRRRRRR...', '....RRRRRRRRR...', '....BBBSSBS.....', '...BSBSSSBSSS...',
+  '...BSBBSSSBSSS..', '...BBSSSSBBBB...', '.....SSSSSSS....', '.....SSSSSS.....'];
+const BTOR = [
+  '....RRBRRR......', '...RRRBRRBRRR...', '..RRRRBBBBRRRR..', '..RRRBBBBBBRRR..', '..RRRBYBBYBRRR..',
+  '..RRRBBBBBBRRR..', '..RRRBBBBBBRRR..', '..SSRBBBBBBRSS..', '..SSSBBBBBBSSS..', '..SSSBBBBBBSSS..',
+  '.....BBBBBB.....', '....BBBBBBBB....', '...BBBBBBBBBB...'];
+const BLEGS = {
+  stand: ['...BBBB..BBBB...', '...BBBB..BBBB...', '...BBBB..BBBB...', '...BBBB..BBBB...', '...BBBB..BBBB...',
+          '...BBBB..BBBB...', '..BBBBB..BBBBB..', '.BBBBBB..BBBBBB.', '.BBBBBB..BBBBBB.', '.BBBBBB..BBBBBB.'],
+  w1: ['...BBBBBBBBBB...', '..BBBBBBBBBBB...', '..BBBBBB.BBBBB..', '.BBBBBB...BBBBB.', '.BBBBB.....BBBBB',
+       'BBBBB.......BBBB', 'BBBBBB......BBBB', 'BBBBBB.....BBBBB', '..........BBBBBB', '..........BBBBBB'],
+  w2: ['....BBBBBBBB....', '....BBBBBBBB....', '....BBBBBBBB....', '....BBBBBBBB....', '....BBB..BBB....',
+       '....BBB..BBB....', '....BBB..BBB....', '...BBBB..BBBB...', '..BBBBB..BBBBB..', '..BBBBB..BBBBB..'],
+  w3: ['...BBBBBBBBBB...', '...BBBBBBBBBBB..', '..BBBBB.BBBBBB..', '.BBBBB...BBBBBB.', 'BBBBB.....BBBBB.',
+       'BBBB.......BBBBB', 'BBBB......BBBBBB', 'BBBBB.....BBBBBB', 'BBBBBB..........', 'BBBBBB..........'],
+};
+const BJUMP_TOR = [
+  '....RRBRRR.SSS..', '...RRRBRRBRSSSS.', '..RRRRBBBBRRSSS.', '..RRRBBBBBBRR...', '..RRRBYBBYBRR...',
+  '..SSRBBBBBBRR...', '.SSSRBBBBBBRR...', '.SSSSBBBBBBR....', '.SS..BBBBBB.....', '.....BBBBBB.....',
+  '.....BBBBBB.....', '....BBBBBBBB....', '...BBBBBBBBBB...'];
+const BJUMP_LEG = [
+  '...BBBBBBBBBBB..', '..BBBBBB..BBBBB.', '..BBBBB....BBBBB', '.BBBBB.....BBBBB', '.BBBBB......BBBB',
+  'BBBBBB.......BBB', 'BBBBB........BBB', 'BBBB............', '................', '................'];
+for (const k of ['stand', 'w1', 'w2', 'w3']) ROWS['M_' + k] = norm(BHEAD.concat(BTOR, BLEGS[k]));
+ROWS.M_jump = norm(BHEAD.concat(BJUMP_TOR, BJUMP_LEG));
+
+/* Goomba: B=corpo, S=base clara, W=olho, K=contorno/pe */
+ROWS.goomba = norm([
+  '.....KKKKKK.....', '...KKBBBBBBKK...', '..KBBBBBBBBBBK..', '.KBBBBBBBBBBBBK.', '.KBBKBBBBBBKBBK.',
+  'KBBBKKBBBBKKBBBK', 'KBBWWKKBBKKWWBBK', 'KBBWWWKBBKWWWBBK', 'KBBWWKKBBKKWWBBK', 'KBBBWWBBBBWWBBBK',
+  '.KBBBBBBBBBBBBK.', '..KKBBBBBBBBKK..', '....KSSSSSSK....', '...KSSSSSSSSK...', '.KKKKSSSSSSKKK..',
+  'KKKKKK..........']);
+ROWS.goomba_sq = norm([
+  '................', '................', '................', '................', '................', '................',
+  '................', '................', '................', '................', '..KKKKKKKKKKKK..', '.KBBBBBBBBBBBBK.',
+  'KBBKWWBBBBWWKBBK', 'KBBBKKBBBBKKBBBK', '.KKSSSSSSSSSSKK.', '..KKKKKKKKKKKK..']);
+
+/* Koopa Troopa (16x24, virado para a esquerda): G=casco, L=brilho, S=pele, W=branco, K=preto */
+const KHEAD = [
+  '................', '................', '.....SSSSS......', '....SSSSSSS.....', '....SSWWSSS.....',
+  '...SSSKWSSS.....', '..SSSSSSSSS.....', '..SSSSSSSS......', '....SSSSSS......'];
+const KBODY = [
+  '....SSSSGGGG....', '...SSSGGGGGGG...', '...SSGGLLGGGGG..', '..SSGGLLLLGGGG..', '...SGGLLWWLGGG..',
+  '....GGLLLLLGGG..', '....GGGLLLGGGG..', '....WWWWWWWWWW..'];
+ROWS.koopa1 = norm(KHEAD.concat(KBODY, [
+  '....SSSSSSSSSS..', '....SSSSSSSSSS..', '....SSSS..SSSS..', '....SSSS..SSSS..', '...SSSSS..SSSSS.', '..SSSSSS..SSSSSS', '..SSSSSS..SSSSSS']));
+ROWS.koopa2 = norm(KHEAD.concat(KBODY, [
+  '....SSSSSSSSSS..', '....SSSSSSSSSS..', '....SSSS.SSSS...', '....SSSS..SSSS..', '...SSSSS...SSS..', '..SSSSSS........', '..SSSSSS........']));
+ROWS.shell = norm([
+  '................', '................', '................', '................', '.....GGGGGG.....', '...GGGGGGGGGG...', '..GGLLGGGGLLGG..', '..GLLLLGGLLLLG..',
+  '.GGLLLLGGLLLLGG.', '.GGGLLGGGGLLGGG.', 'GGGGGGGGGGGGGGGG', 'WWWWWWWWWWWWWWWW', '.WWSSSSSSSSSSWW.', '..SSSSKSSKSSSS..',
+  '...SSKKSSKKSS...', '....SSSSSSSS....']);
+ROWS.mush = norm([
+  '.....RRRRRR.....', '...RRRWWWWRRR...', '..RRWWWWWWWRRR..', '.RRWWWWRRRWWWRR.', '.RRWWWWRRRWWWRR.', 'RRRRWWRRRRRWWRRR',
+  'RRRRRRRRRRRRRRRR', 'RRRRRRRRRRRRRRRR', '.RRRRRRRRRRRRRR.', '...KSSSSSSSSK...', '..SSSKSSSSKSSS..', '..SSSKSSSSKSSS..',
+  '..SSSSSSSSSSSS..', '...SSSSSSSSSS...', '....SSSSSSSS....', '................']);
+ROWS.flower = norm([
+  '......OOOO......', '....OOYYYYOO....', '...OYYRRRRYYO...', '...OYRRWWRRYO...', '...OYRRWWRRYO...', '...OYYRRRRYYO...',
+  '....OOYYYYOO....', '......OOOO......', '.G....GGGG....G.', '.GG...GGGG...GG.', '..GGG.GGGG.GGG..', '....GGGGGGGGG...',
+  '.......GG.......', '.......GG.......', '.......GG.......', '......GGGG......']);
+ROWS.star = norm([
+  '.......YY.......', '.......YY.......', '......YYYY......', '......YYYY......', 'YYYYYYYYYYYYYYYY', '.YYYYYYYYYYYYYY.',
+  '..YYYKYYYYKYYY..', '...YYKYYYYKYY...', '....YYYYYYYYY...', '....YYYYYYYY....', '...YYYYYYYYYY...', '...YYYY..YYYY...',
+  '..YYYY....YYYY..', '..YYY......YYY..', '.YYY........YYY.', '.YY..........YY.']);
+const PAL = {
+  m0: { R: '#b53120', B: '#6b6d00', S: '#ea9e22', Y: '#f8d838' },
+  m1: { R: '#fcfcfc', B: '#d82800', S: '#ea9e22', Y: '#f8d838' },
+  m2: { R: '#000000', B: '#fc9838', S: '#ea9e22', Y: '#fcfc00' },
+  m3: { R: '#00a800', B: '#fcfcfc', S: '#ea9e22', Y: '#b53120' },
+  goomba: { B: '#c84c0c', S: '#fcd8a8', W: '#fcfcfc', K: '#000000' },
+  koopa: { G: '#00a800', L: '#b8f818', S: '#f8d878', W: '#fcfcfc', K: '#000000' },
+  mush: { R: '#d82800', W: '#fcfcfc', S: '#fcd8a8', K: '#000000' },
+  up1: { R: '#00a800', W: '#fcfcfc', S: '#fcd8a8', K: '#000000' },
+  flower: { O: '#d82800', Y: '#fc9838', R: '#fcfc00', W: '#fcfcfc', G: '#00a800' },
+  star: { Y: '#f8d838', K: '#000000' },
+};
+</script>
+<script>
+'use strict';
+/* mesma logica de cache/desenho de sprite do jogo */
+const cache = new Map();
+function spr(id, pal, flip, vflip) {
+  const key = id + '|' + pal + '|' + (flip ? 1 : 0) + (vflip ? 1 : 0);
+  let c = cache.get(key); if (c) return c;
+  const rows = ROWS[id], P = PAL[pal], w = 16, h = rows.length;
+  c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d');
+  for (let r = 0; r < h; r++) for (let q = 0; q < w; q++) {
+    const ch = rows[r][q]; if (ch === '.' || !P[ch]) continue;
+    x.fillStyle = P[ch];
+    x.fillRect(flip ? w - 1 - q : q, vflip ? h - 1 - r : r, 1, 1);
+  }
+  cache.set(key, c); return c;
+}
+
+/* ordem dos quadros de caminhada igual ao jogo: anim += |vx|*0.12 por tick */
+const WALK = ['w1', 'w2', 'w3', 'w2'];
+const marioFrame = (prefix, pal) => (t, o) => {
+  const anim = t * o.vx * 0.12, moving = o.vx > 0.15;
+  const k = moving ? WALK[Math.floor(anim) % 4] : 'stand';
+  return { id: prefix + k, pal: typeof pal === 'function' ? pal(t) : pal, label: k };
+};
+const STAR = ['m0', 'm2', 'm3', 'm1'];
+
+/* cada cartao: titulo, nota, funcao de quadro (t = tick de 60 Hz) e lista de quadros p/ a faixa */
+const CARDS = [
+  { title: 'Mario pequeno', note: 'Andando: w1 → w2 → w3 → w2. Parado quando a velocidade é ~0.',
+    frame: marioFrame('m_', 'm0'), strip: ['stand', 'w1', 'w2', 'w3', 'jump'].map(k => ({ id: 'm_' + k, pal: 'm0', label: k })) },
+  { title: 'Mario grande', note: 'Sprite próprio de 16×32 (não é o pequeno esticado).',
+    frame: marioFrame('M_', 'm0'), strip: ['stand', 'w1', 'w2', 'w3', 'jump'].map(k => ({ id: 'M_' + k, pal: 'm0', label: k })) },
+  { title: 'Mario de fogo', note: 'Mesma animação do grande, com a paleta branca/vermelha.',
+    frame: marioFrame('M_', 'm1'), strip: ['stand', 'w1', 'w2', 'w3', 'jump'].map(k => ({ id: 'M_' + k, pal: 'm1', label: k })) },
+  { title: 'Mario com estrela', note: 'A paleta troca a cada 3 ticks (4 paletas).',
+    frame: marioFrame('M_', t => STAR[Math.floor(t / 3) % 4]), strip: STAR.map(p => ({ id: 'M_stand', pal: p, label: p })) },
+  { title: 'Goomba andando', note: 'Espelha a cada 10 ticks (os pés são assimétricos).',
+    frame: t => ({ id: 'goomba', pal: 'goomba', flip: Math.floor(t / 10) % 2 === 1, label: Math.floor(t / 10) % 2 ? 'espelhado' : 'normal' }),
+    strip: [{ id: 'goomba', pal: 'goomba', label: 'normal' }, { id: 'goomba', pal: 'goomba', flip: true, label: 'espelhado' }, { id: 'goomba_sq', pal: 'goomba', label: 'achatado' }, { id: 'goomba', pal: 'goomba', vflip: true, label: 'morto' }] },
+  { title: 'Goomba pisado', note: 'Fica achatado por 30 ticks e some (ciclo de 80 ticks aqui).',
+    frame: t => (t % 80) < 30 ? { id: 'goomba_sq', pal: 'goomba', label: 'achatado' } : (t % 80) < 40 ? { id: 'goomba', pal: 'goomba', label: 'andando' } : { id: 'goomba', pal: 'goomba', flip: Math.floor(t / 10) % 2 === 1, label: 'andando' },
+    strip: [{ id: 'goomba_sq', pal: 'goomba', label: 'achatado' }] },
+  { title: 'Koopa Troopa', note: 'Dois quadros a cada 10 ticks; vira para a direita quando muda de direção.',
+    frame: (t, o) => ({ id: Math.floor(t / 10) % 2 ? 'koopa2' : 'koopa1', pal: 'koopa', flip: Math.floor(t / 240) % 2 === 1, label: 'koopa' + (Math.floor(t / 10) % 2 + 1) }),
+    strip: [{ id: 'koopa1', pal: 'koopa', label: 'koopa1' }, { id: 'koopa2', pal: 'koopa', label: 'koopa2' }, { id: 'koopa1', pal: 'koopa', flip: true, label: 'direita' }] },
+  { title: 'Casco', note: 'Parado (shell) e deslizando (shellmove, 4.2 px/tick).',
+    frame: t => ({ id: 'shell', pal: 'koopa', label: 'casco' }),
+    strip: [{ id: 'shell', pal: 'koopa', label: 'casco' }, { id: 'shell', pal: 'koopa', vflip: true, label: 'morto' }] },
+  { title: 'Itens', note: 'Cogumelo, 1UP, flor e estrela (a estrela pula sozinha no jogo).',
+    frame: t => { const l = [['mush', 'mush'], ['mush', 'up1'], ['flower', 'flower'], ['star', 'star']], i = Math.floor(t / 60) % 4; return { id: l[i][0], pal: l[i][1], label: ['cogumelo', '1UP', 'flor', 'estrela'][i] }; },
+    strip: [['mush', 'mush', 'cogumelo'], ['mush', 'up1', '1UP'], ['flower', 'flower', 'flor'], ['star', 'star', 'estrela']].map(a => ({ id: a[0], pal: a[1], label: a[2] })) },
+];
+
+const grid = document.getElementById('grid'), opts = { vx: 1.5, zoom: 5, flip: false, paused: false };
+let tick = 0;
+CARDS.forEach(c => {
+  const el = document.createElement('section'); el.className = 'card';
+  el.innerHTML = '<h2></h2><p></p><div class="stage"><canvas></canvas></div><div class="tag"></div><div class="strip"></div>';
+  el.querySelector('h2').textContent = c.title; el.querySelector('p').textContent = c.note;
+  c.main = el.querySelector('.stage canvas'); c.tag = el.querySelector('.tag'); c.stripEl = el.querySelector('.strip');
+  c.stripCanvases = c.strip.map(f => {
+    const cv = document.createElement('canvas'), im = spr(f.id, f.pal, f.flip, f.vflip);
+    cv.width = 16; cv.height = im.height; cv.getContext('2d').drawImage(im, 0, 0);
+    cv.style.width = 16 * 2 + 'px'; cv.title = f.label; cv.dataset.key = f.id + '|' + f.pal + '|' + (f.vflip ? 1 : 0);
+    c.stripEl.appendChild(cv); return cv;
+  });
+  grid.appendChild(el);
+});
+
+function draw() {
+  for (const c of CARDS) {
+    const f = c.frame(tick, opts), im = spr(f.id, f.pal, f.flip !== opts.flip && (f.flip || opts.flip) ? true : false, f.vflip);
+    const m = c.main; m.width = 16; m.height = im.height; m.style.width = 16 * opts.zoom + 'px'; m.style.height = im.height * opts.zoom + 'px';
+    const x = m.getContext('2d'); x.clearRect(0, 0, 16, im.height); x.drawImage(im, 0, 0);
+    c.tag.textContent = 'quadro: ' + f.label + '  |  tick ' + tick;
+    const key = f.id + '|' + f.pal + '|' + (f.vflip ? 1 : 0);
+    c.stripCanvases.forEach(s => s.classList.toggle('on', s.dataset.key === key));
+  }
+}
+let last = performance.now(), acc = 0;
+function loop(now) {
+  acc += Math.min(100, now - last); last = now;
+  while (acc >= 1000 / 60) { if (!opts.paused) tick++; acc -= 1000 / 60; }
+  draw(); requestAnimationFrame(loop);
+}
+document.getElementById('vx').oninput = e => { opts.vx = +e.target.value; document.getElementById('vxv').textContent = e.target.value; };
+document.getElementById('zoom').onchange = e => { opts.zoom = +e.target.value; };
+document.getElementById('flip').onchange = e => { opts.flip = e.target.checked; };
+document.getElementById('pause').onclick = e => { opts.paused = !opts.paused; e.target.textContent = opts.paused ? 'Continuar' : 'Pausar'; };
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

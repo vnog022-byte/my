@@ -1,0 +1,7 @@
+<!doctype html><html><body style="margin:0;background:#222">
+<canvas id="c" width="200" height="100"></canvas>
+<script>
+const x = document.getElementById('c').getContext('2d');
+x.fillStyle = '#5c94fc'; x.fillRect(0, 0, 200, 100);
+setTimeout(() => { x.fillStyle = '#f80'; x.fillRect(20, 20, 60, 60); x.fillStyle = '#fff'; x.font = '20px sans-serif'; x.fillText('ok', 100, 60); }, 200);
+</script></body></html>

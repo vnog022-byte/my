@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Painel de animações</title>
+<style>
+  :root{--bg:#14161c;--card:#1d2029;--line:#2e3340;--fg:#e8eaf0;--mute:#9aa1b2}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,sans-serif}
+  header{padding:12px 16px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:2}
+  h1{font-size:18px;margin:0 8px 0 0}
+  label{display:flex;align-items:center;gap:8px;color:var(--mute)}
+  input[type=range]{width:130px}
+  select,button{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:inherit;cursor:pointer}
+  main{padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+  .card h2{font-size:14px;margin:0}
+  .card p{margin:0;color:var(--mute);font-size:12px}
+  .stage{display:flex;justify-content:center;overflow:hidden;border-radius:6px}
+  canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;max-width:100%}
+  .tag{font-size:11px;color:var(--mute);font-family:ui-monospace,monospace}
+  .strip{display:flex;gap:4px;flex-wrap:wrap;align-items:flex-end}
+  .strip canvas{background:#5c94fc;border-radius:3px}
+  @media (max-width:520px){main{grid-template-columns:1fr;padding:12px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Painel de animações</h1>
+  <label>Velocidade do herói <input id="vx" type="range" min="0" max="2.5" step="0.1" value="1.5"><span id="vxv">1.5</span></label>
+  <label>Zoom <select id="zoom"><option value="3">3x</option><option value="4" selected>4x</option><option value="5">5x</option></select></label>
+  <label><input id="flip" type="checkbox"> Espelhar herói</label>
+  <button id="pause">Pausar</button>
+</header>
+<main id="grid"></main>
+<script>
+'use strict';
+/* copia do bloco ART do index.html (personagens, quadros e particulas) */
+/* ART-BEGIN */
+/* ----------------------------- ARTE -----------------------------
+   Personagens originais desenhados em texto: cada letra e uma cor da paleta.
+   compose() monta um quadro a partir de pedacos (cabeca, tronco, pernas, bracos). */
+const compose = (w, h, parts) => {
+  const g = Array.from({ length: h }, () => new Array(w).fill('.'));
+  for (const [rows, dx = 0, dy = 0] of parts) rows.forEach((r, y) => {
+    for (let x = 0; x < r.length; x++) { const ch = r[x], X = x + dx, Y = y + dy; if (ch !== '.' && Y >= 0 && Y < h && X >= 0 && X < w) g[Y][X] = ch; }
+  });
+  return g.map(r => r.join(''));
+};
+const mirror = rows => rows.map(r => [...r].reverse().join(''));
+const rot90 = rows => [...rows[0]].map((_, x) => rows.map(r => r[x]).reverse().join(''));
+const recolor = (rows, m) => rows.map(r => r.replace(/./g, ch => m[ch] || ch));
+const shade = rows => recolor(rows, { C: 'M', S: 'T' });
+const swapLegs = rows => recolor(rows, { P: 'Q', Q: 'P', O: 'N', N: 'O' });
+const ROWS = {}, PAL = {};
+
+/* ---- Heroi: K=contorno C=moletom L=borda M=moletom escuro S=pele T=pele escura B=bochecha E=olho P/Q=calca O/N=tenis
+   Caminhada classica em 4 quadros: contato (pernas em V, corpo 1 px abaixo), passagem (perna de apoio reta,
+   a outra passando com o pe levantado) e o mesmo com a outra perna. Perna e braco do mesmo lado em oposicao.
+   Pernas sem contorno interno para ficarem legiveis a 16 px. ---- */
+const HH = [
+  '.K......K...', 'KCK....KCK..', 'KCCKKKKKCCK.', 'KCCCLLLLLCCK',
+  'KCCLSSSSESLK', 'KCCLSSSBESSK', '.KCCLLLLLLK.'];
+const HH2 = ['.K..........', 'KCK.....KKK.', 'KCCKKKKKCCCK'].concat(HH.slice(3));
+const HF = [
+  '...K........K...', '..KCK......KCK..', '..KCCKKKKKKCCK..', '.KCCLLLLLLLLCCK.',
+  '.KCLSESSSSESLCK.', '.KCLSSSKKSSSLCK.', '..KCLLLLLLLLCK..'];
+const ST = {
+  stand: ['...KCCCCCCCCK...', '...SKCCCCCCKS...', '....KLLLLLLK....'],
+  plain: ['...KCCCCCCCCK...', '...KCCCCCCCCK...', '....KLLLLLLK....'],
+  swA:   ['...KCCCCCCCCK...', '..SKCCCCCCCCKT..', '....KLLLLLLK....'],
+  swB:   ['...KCCCCCCCCK...', '..TKCCCCCCCCKS..', '....KLLLLLLK....'],
+  jump:  ['...KCCCCCCCCK...', '..TKCCCCCCCCK...', '....KLLLLLLK....'],
+  skid:  ['....KCCCCCCCCK..', '...TKCCCCCCCCKS.', '.....KLLLLLLK...'],
+  climb1:['...KCCCCCCCCKS..', '...KCCCCCCCCK...', '....KLLLLLLKS...'],
+  climb2:['...KCCCCCCCCK...', '...KCCCCCCCCKS..', '....KLLLLLLK.S..'],
+  die:   ['S..KCCCCCCCCK..S', '.SKCCCCCCCCCCKS.', '...KLLLLLLLLK...'],
+};
+/* quadril + pernas + tenis (6 linhas na altura normal, 5 quando o corpo desce 1 px) */
+const SL = {
+  stand: ['....KPPPPPPK....', '.....QQ..PP.....', '.....QQ..PP.....', '.....QQ..PP.....', '.....QQ..PP.....', '.....NNN.OOO....'],
+  cA:    ['....KPPPPPPK....', '.....QQ..PP.....', '....QQ....PP....', '...QQ......PP...', '..NNN......OOO..'],
+  pA:    ['....KPPPPPPK....', '......QQPP......', '......QQPP......', '.....QQ.PP......', '....NNN.PP......', '........OOO.....'],
+  jump:  ['....KPPPPPPK....', '.....QQPPPP.....', '.....QQ...PP....', '....QQ....PP....', '....QQ....OOO...', '...NNN..........'],
+  fall:  ['....KPPPPPPK....', '.....QQ..PP.....', '.....QQ..PP.....', '....QQ....PP....', '....QQ....PP....', '...NNN....OOO...'],
+  skid:  ['.....KPPPPPPK...', '.....QQ.PP......', '....QQ.PP.......', '...QQ.PP........', '..QQ.PP.........', '.NNNOOO.........'],
+  land:  ['...KPPPPPPPPK...', '...QQ......PP...', '..QQ........PP..', '..NNN......OOO..'],
+  climb1:['....KPPPPPPK....', '.....QQPPPP.....', '.....QQ...PP....', '.....QQ...OOOO..', '.....QQ.........', '....NNN.........'],
+  die:   ['....KPPPPPPK....', '.....PP..PP.....', '.....PP..PP.....', '.....PP..PP.....', '.....PP..PP.....', '....OOO..OOO....'],
+};
+SL.cB = swapLegs(SL.cA); SL.pB = swapLegs(SL.pA); SL.climb2 = swapLegs(SL.climb1);
+const ARM_UP_R = [['..S', '..S', '.CK', 'C..'], 12, 4], ARM_UP_L = [['S...', 'S...', '.C..', '..CC'], 0, 4];
+const small = (head, hx, torso, legs, dy = 0, extra = []) => compose(16, 16, [[head, hx, dy], [torso, 0, 7 + dy], [legs, 0, 16 - legs.length], ...extra]);
+ROWS.h_stand = small(HH, 2, ST.stand, SL.stand);
+ROWS.h_stand2 = small(HH2, 2, ST.stand, SL.stand);
+ROWS.h_w1 = small(HH, 2, ST.swA, SL.cA, 1);
+ROWS.h_w2 = small(HH, 2, ST.stand, SL.pA);
+ROWS.h_w3 = small(HH, 2, ST.swB, SL.cB, 1);
+ROWS.h_w4 = small(HH, 2, ST.stand, SL.pB);
+ROWS.h_jump = small(HH, 2, ST.jump, SL.jump, 0, [ARM_UP_R]);
+ROWS.h_fall = small(HH, 2, ST.plain, SL.fall, 0, [ARM_UP_L, ARM_UP_R]);
+ROWS.h_skid = small(HH, 3, ST.skid, SL.skid);
+ROWS.h_land = small(HH, 2, ST.stand, SL.land, 2);
+ROWS.h_climb1 = small(HH, 2, ST.climb1, SL.climb1);
+ROWS.h_climb2 = small(HH, 2, ST.climb2, SL.climb2);
+ROWS.h_die1 = compose(16, 16, [[HF], [ST.die, 0, 7], [SL.die, 0, 10]]);
+ROWS.h_die2 = compose(16, 16, [[HF], [['S..............S', 'S..............S', 'C..............C', '.C............C.', '..CC........CC..'], 0, 3], [ST.plain, 0, 7], [SL.die, 0, 10]]);
+
+/* heroi grande (16x32): cabeca 7 linhas, tronco 13 (termina no quadril), pernas 12 */
+const BT = ['....KCCCCCCK....', '...KCCCCCCCCK...', '...KCCCCCCCCK...', '...KCCCCCCCCK...', '...KCCCCCCCCK...', '...KCCLLLLCCK...',
+            '...KCCLCCLCCK...', '...KCCCCCCCCK...', '...KCCCCCCCCK...', '...KCCCCCCCCK...', '...KCCCCCCCCK...', '...KLLLLLLLLK...',
+            '....KPPPPPPK....'];
+const ARM = {
+  down:  ['.KK.', 'KCCK', 'KCCK', 'KCCK', 'KCCK', 'KCCK', 'KSSK', 'KSSK', '.KK.'],
+  fwd:   ['.KK...', 'KCCK..', 'KCCCK.', '.KCCCK', '..KCSS', '...KSS', '....KK'],
+  back:  ['...KK.', '..KCCK', '.KCCCK', 'KCCCK.', 'SSCK..', 'SSK...', 'KK....'],
+  up:    ['....KK', '...KSS', '..KCSS', '.KCCK.', 'KCCK..', 'KCK...'],
+  throw: ['.KK......', 'KCCKKKK..', 'KCCCCCCSS', '.KKKKKKSS', '.......KK'],
+};
+const BL = {
+  stand: ['....QQQ..PPP....', '....QQQ..PPP....', '....QQQ..PPP....', '....QQQ..PPP....', '.....QQ..PP.....', '.....QQ..PP.....',
+          '.....QQ..PP.....', '.....QQ..PP.....', '.....QQ..PP.....', '.....QQ..PP.....', '....NNNN.OOOO...', '....KKKK.KKKK...'],
+  cA:    ['....QQQ..PPP....', '...QQQ....PPP...', '...QQQ....PPP...', '..QQQ......PPP..', '..QQ.......PPP..', '.QQ.........PP..',
+          '.QQ.........PP..', 'QQ...........PP.', 'QQ...........PP.', 'NNN.........OOOO', 'KKK.........KKKK'],
+  pA:    ['.....QQPPP......', '.....QQPPP......', '....QQ.PPP......', '....QQ.PPP......', '...QQ..PPP......', '...QQ...PP......',
+          '..QQ....PP......', '.NNNN...PP......', '.KKKK...PP......', '........PP......', '.......OOOO.....', '.......KKKK.....'],
+  jump:  ['.....QQPPPP.....', '.....QQPPPPP....', '....QQQ...PPP...', '....QQ.....PP...', '...QQ......PP...', '...QQ.....OOOO..',
+          '..QQ......KKKK..', '..QQ............', '.QQ.............', '.QQ.............', 'NNN.............', 'KKK.............'],
+  fall:  ['....QQQ.PPP.....', '....QQQ.PPP.....', '....QQ...PP.....', '...QQ....PP.....', '...QQ.....PP....', '...QQ.....PP....',
+          '...QQ.....PP....', '..NNNN....OOOO..', '..KKKK....KKKK..', '................', '................', '................'],
+  skid:  ['......QQPPP.....', '.....QQ.PPP.....', '.....QQ.PP......', '....QQ.PP.......', '....QQ.PP.......', '...QQ.PP........',
+          '...QQ.PP........', '..QQ.PP.........', '..QQ.PP.........', '.QQ.PP..........', 'NNNOOOO.........', 'KKKKKKK.........'],
+  land:  ['...QQQ..PPP.....', '..QQQ....PPP....', '..QQ......PPP...', '..QQ.......PP...', '..QQ.......PP...', '...QQ.....PP....',
+          '...QQ.....PP....', '..NNNN...OOOO...', '..NNNN...OOOO...', '..KKKK...KKKK...'],
+  climb1:['.....QQPPPP.....', '.....QQPPPPPP...', '.....QQ...PPP...', '.....QQ....PP...', '.....QQ...OOOO..', '.....QQ...KKKK..',
+          '.....QQ.........', '.....QQ.........', '....NNNN........', '....KKKK........', '................', '................'],
+};
+BL.cB = swapLegs(BL.cA); BL.pB = swapLegs(BL.pA); BL.climb2 = swapLegs(BL.climb1);
+/* [pernas, braco da frente, braco de tras, desce (px), desloca (px)] */
+const BIG_POSE = {
+  stand: [BL.stand, [ARM.down, 11, 9], [shade(ARM.down), 1, 9]],
+  w1: [BL.cA, [ARM.back, 1, 9], [shade(ARM.fwd), 9, 9], 1],
+  w2: [BL.pA, [ARM.down, 11, 9], [shade(ARM.down), 1, 9]],
+  w3: [BL.cB, [ARM.fwd, 10, 9], [shade(ARM.back), 0, 9], 1],
+  w4: [BL.pB, [ARM.down, 11, 9], [shade(ARM.down), 1, 9]],
+  jump: [BL.jump, [ARM.up, 10, 4], [shade(ARM.back), 0, 9]],
+  fall: [BL.fall, [ARM.up, 10, 4], [shade(mirror(ARM.up)), 0, 4]],
+  skid: [BL.skid, [ARM.fwd, 10, 8], [shade(ARM.back), 0, 9], 0, 1],
+  land: [BL.land, [ARM.down, 11, 9], [shade(ARM.down), 1, 9], 2],
+  climb1: [BL.climb1, [ARM.up, 9, 5], [shade(ARM.fwd), 9, 11]],
+  climb2: [BL.climb2, [ARM.fwd, 9, 10], [shade(ARM.up), 9, 4]],
+};
+const big = (legs, near, far, dy = 0, dx = 0, head = HH) => compose(16, 32, [
+  [far[0], far[1] + dx, far[2] + dy], [head, 2 + dx, dy], [BT, dx, 7 + dy], [legs, 0, 32 - legs.length], [near[0], near[1] + dx, near[2] + dy]]);
+for (const k in BIG_POSE) {
+  const [legs, near, far, dy, dx] = BIG_POSE[k];
+  ROWS['H_' + k] = big(legs, near, far, dy, dx);
+  if (!k.startsWith('climb')) ROWS['H_' + k + '_t'] = big(legs, [ARM.throw, 7, 11], k === 'fall' ? far : [shade(ARM.back), 0, 9], dy, dx);
+}
+ROWS.H_stand2 = big(BL.stand, [ARM.down, 11, 9], [shade(ARM.down), 1, 9], 0, 0, HH2);
+
+const HERO = { K: '#1c1828', C: '#20a08c', L: '#9cf0d8', M: '#127060', S: '#fcc8a0', T: '#d89878', B: '#f87860', E: '#1c1828', P: '#3c4ca8', Q: '#283070', O: '#f87818', N: '#b84808' };
+PAL.hero = HERO;
+PAL.heroF = { ...HERO, C: '#e8401c', L: '#fcd860', M: '#981c10', O: '#fcd860', N: '#c89820' };
+PAL.heroS1 = { ...HERO, C: '#f8b800', L: '#fcf0a0', M: '#b07000', P: '#e84010', Q: '#a02008' };
+PAL.heroS2 = { ...HERO, C: '#f83890', L: '#fcc0e0', M: '#a01858' };
+PAL.heroS3 = { ...HERO, C: '#38c8f8', L: '#d0f8fc', M: '#1870b0', P: '#fcfcfc', Q: '#a8a8b8' };
+
+/* ---- Gosma (anda esticando e achatando): K=contorno B=corpo L=brilho M=sombra W=olho E=pupila V/U=broto ---- */
+ROWS.blob_n = [
+  '................', '................', '........VV......', '.......VUK......', '.....KKKKKK.....', '...KKBBBBBBKK...',
+  '..KBBLLBBBBBBK..', '.KBBLLBBBBBBBBK.', '.KBLLBBBBBBBBBK.', '.KBEWWBBBEWWBBK.', '.KBEWWBBBEWWBBK.', '.KBBBBBBBBBBBBK.',
+  '.KBBBBKKBBBBMBK.', '.KMBBBBBBBBBMMK.', '..KMMMMMMMMMMK..', '...KKKKKKKKKK...'];
+ROWS.blob_sq = [
+  '................', '................', '................', '................', '................', '.........VV.....',
+  '........VUK.....', '....KKKKKKKK....', '..KKBBBBBBBBKK..', '.KBBLLLBBBBBBBK.', 'KBBLLBBBBBBBBBBK', 'KBEWWBBBBBEWWBBK',
+  'KBEWWBBBBBEWWBBK', 'KBBBBBKKBBBBBMBK', '.KMMMMMMMMMMMMK.', '..KKKKKKKKKKKK..'];
+ROWS.blob_st = [
+  '........VV......', '.......VUK......', '......KKKK......', '.....KBBBBK.....', '....KBLLBBBK....', '...KBLLBBBBBK...',
+  '...KBLBBBBBBK...', '...KEWWBBEWWK...', '...KEWWBBEWWK...', '...KBBBBBBBBK...', '...KBBBKKBBMK...', '...KBBBBBBBMK...',
+  '...KMBBBBBBMK...', '...KMMBBBBMMK...', '....KMMMMMMK....', '.....KKKKKK.....'];
+ROWS.blob_flat = [
+  '................', '................', '................', '................', '................', '................',
+  '................', '................', '................', '................', '................', '...KKKKKKKKKK...',
+  '.KKBKBKBBKBKBKK.', 'KBBBBKBBBBKBBBBK', 'KBBBKBKBBKBKBBBK', '.KKKKKKKKKKKKKK.'];
+const blink = rows => { let n = 0; return rows.map(r => r.includes('E') ? r.replace(/[EW]/g, n++ ? 'K' : 'B') : r); };
+for (const k of ['blob_n', 'blob_sq', 'blob_st']) ROWS[k + '_b'] = blink(ROWS[k]);
+PAL.blob = { K: '#3c1458', B: '#a048d8', L: '#d8a0f8', M: '#7028a8', W: '#fcfcfc', E: '#1c1828', V: '#48c838', U: '#208018' };
+
+/* ---- Pangolim (16x24, olha para a esquerda; vira bola quando pisado): A=escamas S=pele T=pele escura E=olho W=garra ---- */
+const scales = rows => rows.map((r, y) => r.replace(/A/g, (m, x) => {
+  const u = (x + (Math.floor(y / 3) % 2) * 2) % 4, v = y % 3;
+  return v === 0 ? (u === 3 ? 'M' : 'H') : v === 1 ? (u === 3 ? 'M' : 'A') : (u === 0 ? 'A' : 'M');
+}));
+const PBODY = scales([
+  '................', '................', '................', '.......KKKK.....', '.....KKSSAAK....', '...KKSSESAAAK...',
+  'KKKSSSSSAAAAAK..', 'KSSSSSSAAAAAAAK.', '.KKKTSSAAAAAAAK.', '....KTSAAAAAAAAK', '....KSSAAAAAAAAK', '...KSSSAAAAAAAAK',
+  '...KWSSAAAAAAAAK', '....KSSAAAAAAAAK', '....KTSAAAAAAAAK', '....KTTAAAAAAAAK', '.....KTAAAAAAAAK', '.....KTAAAAAAAAK',
+  '......KAAAAAAAAK', '.......KKKKKKKKK']);
+const PLEGS = {
+  a: ['....KSSK.KTTK...', '...KSSK...KTTK..', '..KSSSK....KTTK.', '..KWKWK....KWKWK'],
+  b: ['.....KSSKTTK....', '....KSSSKTTTK...', '....KWKWKWKWK...'],
+  c: ['....KTTK.KSSK...', '...KTTK...KSSK..', '..KTTTK....KSSK.', '..KWKWK....KWKWK'],
+};
+ROWS.pango_a = compose(16, 24, [[PBODY], [PLEGS.a, 0, 20]]);
+ROWS.pango_b = compose(16, 24, [[PBODY, 0, 1], [PLEGS.b, 0, 21]]);
+ROWS.pango_c = compose(16, 24, [[PBODY], [PLEGS.c, 0, 20]]);
+const ballRows = (spin, peek) => {
+  const rows = [];
+  for (let y = 0; y < 16; y++) {
+    let r = '';
+    for (let x = 0; x < 16; x++) {
+      const dx = x - 7.5, dy = y - 7.5, d = Math.hypot(dx, dy);
+      if (d > 7.7) { r += '.'; continue; }
+      if (d > 6.6) { r += 'K'; continue; }
+      const a = ((Math.atan2(dy, dx) + spin) % (Math.PI / 3) + Math.PI / 3) % (Math.PI / 3);
+      let ch = d < 2.6 ? 'M' : a < 0.3 ? 'M' : a < 0.6 ? 'H' : 'A';
+      if (dx + dy < -6.5 && ch === 'A') ch = 'H';
+      if (dx + dy > 6 && ch !== 'M') ch = 'M';
+      r += ch;
+    }
+    rows.push(r);
+  }
+  return peek ? compose(16, 16, [[rows], [['.KK', 'KSSK', 'SESK', 'KSSK', '.KK'], 0, 6]]) : rows;
+};
+for (let i = 0; i < 4; i++) ROWS['ball' + i] = ballRows(-i * Math.PI / 12);
+ROWS.ball_peek = ballRows(0, true);
+PAL.pango = { K: '#3a200c', A: '#c87830', H: '#f0b860', M: '#8c4c18', S: '#f8d0a8', T: '#d8a078', E: '#1c1828', W: '#fcfcfc' };
+
+/* ---- Itens ---- */
+ROWS.apple = [
+  '................', '........KKK.....', '.......KVVVK....', '......KDKKK.....', '...KKKKDKKKK....', '..KRRRRKRRRRK...',
+  '.KRWWRRRRRRRRK..', '.KRWRRRRRRRRRK..', 'KRRRRRRRRRRRRRK.', 'KRRRRRRRRRRRRRK.', 'KRRRRRRRRRRRDRK.', 'KRRRRRRRRRRRDRK.',
+  '.KRRRRRRRRRDDK..', '.KRRRRRRRRRDDK..', '..KKRRRRRRDKK...', '....KKKKKKKK....'];
+ROWS.chili = [
+  '................', '...KK...........', '..KVVK..........', '..KVVVK.........', '...KVVVKK.......', '...KRRRRRK......',
+  '...KRWRRRRK.....', '....KRWRRRRK....', '....KRRRRRRRK...', '.....KRRRRRRRK..', '......KRRRRRRK..', '.......KRRRRRK..',
+  '........KRRRRK..', '.........KRRK...', '..........KRK...', '...........K....'];
+ROWS.heart = [
+  '................', '................', '................', '...KKK...KKK....', '..KRRRK.KRRRK...', '.KRWWRRKRRRRRK..',
+  '.KRWRRRRRRRRRK..', '.KRRRRRRRRRRRK..', '.KRRRRRRRRRRDK..', '..KRRRRRRRRDK...', '...KRRRRRRDK....', '....KRRRRDK.....',
+  '.....KRRDK......', '......KRK.......', '.......K........', '................'];
+ROWS.heart2 = compose(16, 16, [[[
+  '..KK..KK..', '.KRRKKRRK.', 'KRWRRRRRRK', 'KRRRRRRRDK', '.KRRRRRDK.', '..KRRRDK..', '...KRDK...', '....KK....'], 3, 6]]);
+ROWS.star = [
+  '.......KK.......', '......KYYK......', '......KYYK......', '.....KYWYYK.....', 'KKKKKYWYYYYKKKKK', 'KYYYYYYYYYYYYYYK',
+  '.KYYYYYYYYYYYYK.', '..KYYYYYYYYYYK..', '...KYYYYYYYYK...', '...KYYYYYYYYK...', '..KYYYYYYYYYYK..', '..KYYYYKKYYYYK..',
+  '.KYYYYK..KYYYYK.', '.KYYYK....KYYYK.', 'KYYKK......KKYYK', 'KKK..........KKK'];
+PAL.apple = { K: '#3c0c08', R: '#e02818', W: '#fcd0c0', D: '#981008', V: '#48c838' };
+PAL.chili0 = { K: '#3c0c08', R: '#e82810', W: '#fcd860', V: '#48c838' };
+PAL.chili1 = { ...PAL.chili0, R: '#f86818', W: '#fcfc90' };
+PAL.chili2 = { ...PAL.chili0, R: '#f8a020', W: '#fcfcfc' };
+PAL.heart = { K: '#3c0c20', R: '#f83878', W: '#fcd0e0', D: '#a8105c' };
+PAL.star0 = { K: '#5c3800', Y: '#f8d838', W: '#fcfcfc' };
+PAL.star1 = { K: '#5c3800', Y: '#fcfc90', W: '#fcfcfc' };
+PAL.star2 = { K: '#5c3800', Y: '#f89820', W: '#fcfc90' };
+
+/* ---- Efeitos: moeda girando, bola de fogo, pedaco de tijolo ---- */
+ROWS.coin0 = ['..KKKK..', '.KYYYYK.', 'KYWYYYOK', 'KYWYOYOK', 'KYWYOYOK', 'KYWYOYOK', 'KYWYOYOK', 'KYWYOYOK', 'KYWYOYOK', 'KYWYOYOK', 'KYWYYYOK', 'KYYYYYOK', '.KOOOOK.', '..KKKK..'];
+ROWS.coin1 = ['..KKKK..', '.KYYYOK.', '.KWYYOK.', '.KWYOOK.', '.KWYOOK.', '.KWYOOK.', '.KWYOOK.', '.KWYOOK.', '.KWYOOK.', '.KWYOOK.', '.KWYYOK.', '.KYYYOK.', '..KOOK..', '..KKKK..'];
+ROWS.coin2 = ['...KK...', '..KWOK..', '..KWOK..', '..KWOK..', '..KWOK..', '..KWOK..', '..KWOK..', '..KWOK..', '..KWOK..', '..KWOK..', '..KWOK..', '..KWOK..', '..KWOK..', '...KK...'];
+ROWS.coin3 = mirror(recolor(ROWS.coin1, { W: 'O', O: 'W' }));
+PAL.coin = { K: '#6c4800', Y: '#f8d838', O: '#d89000', W: '#fcfce0' };
+const FB = ['..KKKK..', '.KRROOK.', 'KRROYYOK', 'KROYWWYK', 'KROYWWYK', 'KRROYYOK', '.KRRROK.', '..KKKK..'];
+ROWS.fire0 = FB; ROWS.fire1 = rot90(FB); ROWS.fire2 = rot90(ROWS.fire1); ROWS.fire3 = rot90(ROWS.fire2);
+PAL.fire = { K: '#781000', R: '#e83010', O: '#f88818', Y: '#fcd848', W: '#fcfcfc' };
+const DEB = ['KKKKKK..', 'KBBBBBK.', 'KBLBBBK.', 'KBBBBBBK', 'KKKKBBBK', '...KBBBK', '...KBBK.', '....KK..'];
+ROWS.deb0 = DEB; ROWS.deb1 = rot90(DEB); ROWS.deb2 = rot90(ROWS.deb1); ROWS.deb3 = rot90(ROWS.deb2);
+PAL.deb = { K: '#000000', B: '#c84c0c', L: '#fcbcb0' };
+
+const sprCache = new Map();
+function spr(id, pal, flip, vflip) {
+  const key = id + '|' + pal + '|' + (flip ? 1 : 0) + (vflip ? 1 : 0);
+  let c = sprCache.get(key); if (c) return c;
+  const rows = ROWS[id], P = PAL[pal], w = rows[0].length, h = rows.length;
+  c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d');
+  for (let r = 0; r < h; r++) for (let q = 0; q < w; q++) {
+    const ch = rows[r][q]; if (ch === '.' || !P[ch]) continue;
+    x.fillStyle = P[ch]; x.fillRect(flip ? w - 1 - q : q, vflip ? h - 1 - r : r, 1, 1);
+  }
+  sprCache.set(key, c); return c;
+}
+
+/* ---- escolha do quadro de cada animacao (usada pelo jogo e pelo painel) ---- */
+const WALK = ['w1', 'w2', 'w3', 'w4'], STAR_PALS = ['heroS1', 'heroS2', 'heroS3', 'hero'];
+/* a caminhada avanca pela distancia percorrida (um quadro a cada meia passada), assim o pe de apoio nao patina */
+const walkStep = big => big ? 6 : 4.5;
+function stepWalk(p, big) {
+  const s = Math.abs(p.vx), d = walkStep(big);
+  if (p.ground && s > 0.15) { p.walkD += s; if (p.walkD >= d) { p.walkD -= d; p.walkF = (p.walkF + 1) % 4; } }
+  else p.walkD = d;
+}
+function heroPose(p) {
+  if (p.state === 'die') return (p.t >> 3) & 1 ? 'die2' : 'die1';
+  if (p.state === 'flag') return Math.floor(p.anim) % 2 ? 'climb2' : 'climb1';
+  if (!p.ground) return p.vy < 0 ? 'jump' : 'fall';
+  if (p.landT > 0) return 'land';
+  if (p.skid) return 'skid';
+  if (Math.abs(p.vx) > 0.15) return WALK[p.walkF % 4];
+  return p.idle % 160 > 148 ? 'stand2' : 'stand';
+}
+function heroSprite(p, big) {
+  const pose = heroPose(p);
+  if (!big || pose.startsWith('die')) return 'h_' + pose;
+  return p.throwT > 0 && ROWS['H_' + pose + '_t'] ? 'H_' + pose + '_t' : 'H_' + pose;
+}
+const heroPal = (p, tick) => p.star > 0 ? STAR_PALS[Math.floor(tick / (p.star < 120 ? 6 : 3)) % 4] : p.power === 2 ? 'heroF' : 'hero';
+const GROW_SEQ = [16, 24, 16, 24, 32, 24, 32, 24, 32];
+function enemySprite(e, tick, px) {
+  if (e.type === 'blob') {
+    if (e.state === 'squish') return { id: 'blob_flat', pal: 'blob' };
+    if (e.state === 'dead') return { id: 'blob_n', pal: 'blob', vflip: true };
+    const k = ['blob_n', 'blob_sq', 'blob_n', 'blob_st'][Math.floor(e.anim / 8) % 4];
+    return { id: (e.anim + e.seed) % 140 < 7 ? k + '_b' : k, pal: 'blob', flip: e.dir > 0 };
+  }
+  if (e.state === 'dead') return { id: e.h === 24 ? 'pango_a' : 'ball0', pal: 'pango', flip: e.dir > 0, vflip: true };
+  if (e.state === 'walk') return { id: ['pango_a', 'pango_b', 'pango_c', 'pango_b'][Math.floor(e.anim / 8) % 4], pal: 'pango', flip: e.dir > 0 };
+  if (e.state === 'shellmove') return { id: 'ball' + (((Math.floor(e.roll / 6) % 4) + 4) % 4), pal: 'pango' };
+  return { id: e.shellT % 150 > 105 ? 'ball_peek' : 'ball0', pal: 'pango', flip: px > e.x };
+}
+function itemSprite(it, tick) {
+  if (it.type === 'grow') return { id: 'apple', pal: 'apple' };
+  if (it.type === 'fire') return { id: 'chili', pal: 'chili' + [0, 1, 2, 1][Math.floor(tick / 4) % 4] };
+  if (it.type === 'life') return { id: Math.floor(tick / 12) % 2 ? 'heart2' : 'heart', pal: 'heart' };
+  return { id: 'star', pal: 'star' + [0, 1, 0, 2][Math.floor(tick / 3) % 4] };
+}
+const coinSprite = t => 'coin' + Math.floor(t / 2) % 4;
+const fireSprite = f => 'fire' + (f.vx < 0 ? 3 - Math.floor(f.t / 3) % 4 : Math.floor(f.t / 3) % 4);
+const debSprite = d => 'deb' + Math.floor(d.t / 4) % 4;
+
+/* ---- particulas: poeira, brilhos, gotas, impacto ---- */
+function pixDisc(c, x, y, r) { for (let dy = -r; dy <= r; dy++) { const w = Math.round(Math.sqrt(r * r - dy * dy)); c.fillRect(x - w, y + dy, w * 2 + 1, 1); } }
+function drawPart(c, q, ox) {
+  const x = Math.round(q.x - ox), y = Math.round(q.y), k = q.t / q.life;
+  if (q.k === 'dust') { c.fillStyle = k < 0.45 ? '#fcfcfc' : '#d8d0c8'; pixDisc(c, x, y, [1, 2, 2, 2, 1, 1, 0][Math.floor(k * 7)]); }
+  else if (q.k === 'spark') { const s = [0, 1, 2, 1, 0][Math.floor(k * 5)]; c.fillStyle = q.col || '#fcfcfc'; c.fillRect(x - s, y, s * 2 + 1, 1); c.fillRect(x, y - s, 1, s * 2 + 1); }
+  else if (q.k === 'goo') { const s = k < 0.7 ? 2 : 1; c.fillStyle = q.col; c.fillRect(x, y, s, s); }
+  else if (q.k === 'burst') {
+    const d = 3 + Math.floor(k * 6); c.fillStyle = '#fcfcfc';
+    for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) c.fillRect(x + sx * d - 1, y + sy * Math.round(d * 0.6), 2, 1);
+    c.fillRect(x - 1, y - d - 1, 2, 2);
+  }
+  else if (q.k === 'ring') {
+    const r = 1 + Math.floor(k * 5); c.fillStyle = k < 0.5 ? q.col : '#c8c8c8';
+    for (let a = 0; a < 12; a++) c.fillRect(x + Math.round(Math.cos(a * Math.PI / 6) * r), y + Math.round(Math.sin(a * Math.PI / 6) * r), 1, 1);
+  }
+}
+/* ART-END */
+
+/* ------------------------- painel de demonstracao ------------------------- */
+const opts = { vx: 1.5, zoom: 4, flip: false, paused: false };
+let tick = 0;
+const cards = [];
+const put = (c, id, pal, x, y, flip, vflip) => c.drawImage(spr(id, pal, flip, vflip), Math.round(x), Math.round(y));
+const sky = (c, w, h) => { c.fillStyle = '#5c94fc'; c.fillRect(0, 0, w, h); c.fillStyle = '#c84c0c'; c.fillRect(0, h - 6, w, 6); c.fillStyle = '#000'; c.fillRect(0, h - 6, w, 1); };
+const heroMock = o => Object.assign({ state: 'play', ground: true, vx: 0, vy: 0, anim: 0, landT: 0, skid: false, throwT: 0, idle: 0, power: 0, star: 0, t: 0, walkF: 0, walkD: 0 }, o);
+const tickParts = list => { for (const q of list) { q.t++; q.x += q.vx; q.y += q.vy; if (q.g) q.vy += q.g; } return list.filter(q => q.t < q.life); };
+const puff = (list, x, y, dir = 0) => list.push({ k: 'dust', x: x + Math.random() * 4 - 2, y, vx: dir * 0.5, vy: -0.3, t: 0, life: 16 });
+const twinkle = (list, x, y, col) => list.push({ k: 'spark', x, y, vx: 0, vy: -0.15, t: 0, life: 16, col });
+const card = (title, note, w, h, draw, strip) => cards.push({ title, note, w, h, draw, strip, parts: [] });
+const frames = (pre, names, pal) => names.map(n => [pre + n, pal]);
+
+/* andar/correr no mesmo ritmo do jogo: 4 quadros, um a cada meia passada percorrida (o pe nao patina) */
+const walkS = heroMock(), walkB = heroMock({ power: 1 });
+const walkTick = (h, big) => { h.vx = opts.vx; stepWalk(h, big); h.idle = h.vx < 0.05 ? h.idle + 1 : 0; };
+const speedTag = (h, big) => heroPose(h) + (h.vx > 0.15 ? ' · ' + (walkStep(big) / h.vx).toFixed(1) + ' ticks/quadro' : '');
+card('Herói pequeno andando', 'Contato (pernas em V, corpo 1 px abaixo) e passagem (perna reta, outro pé levantado), alternando as pernas. Parado, ele mexe a orelha.', 48, 40, c => {
+  walkTick(walkS, false); put(c, heroSprite(walkS, false), 'hero', 16, 18, opts.flip); return speedTag(walkS, false);
+}, frames('h_', ['stand', 'stand2', 'w1', 'w2', 'w3', 'w4'], 'hero'));
+card('Herói grande andando', 'Braço e perna do mesmo lado sempre em oposição; pernas sem contorno interno para ficarem limpas.', 48, 48, c => {
+  walkTick(walkB, true); put(c, heroSprite(walkB, true), 'hero', 16, 10, opts.flip); return speedTag(walkB, true);
+}, frames('H_', ['stand', 'w1', 'w2', 'w3', 'w4'], 'hero'));
+
+/* roteiro de acoes (240 ticks) */
+const actS = heroMock(), actB = heroMock({ power: 1 });
+function actScript(h, t) {
+  Object.assign(h, { ground: true, vy: 0, landT: 0, skid: false, vx: 0, idle: 0 });
+  if (t < 60) { h.idle = 100 + t; return 'parado (orelha)'; }
+  if (t < 90) { h.ground = false; h.vy = -1; return 'pulo'; }
+  if (t < 120) { h.ground = false; h.vy = 1; return 'queda'; }
+  if (t < 132) { h.landT = 1; return 'aterrissagem'; }
+  if (t < 180) { h.skid = true; h.vx = 1; return 'derrapagem'; }
+  h.vx = 1.5; stepWalk(h, h.power > 0); return 'andando';
+}
+card('Pulo, queda, aterrissagem e derrapagem', 'Poeira ao aterrissar e ao derrapar. Um braço sobe no pulo; na queda sobem os dois.', 80, 48, (c, s) => {
+  const t = tick % 240, label = actScript(actS, t); actScript(actB, t);
+  if (t === 120) [14, 26, 54, 66].forEach((x, i) => puff(s.parts, x, 41, i % 2 ? 1 : -1));
+  if (t >= 132 && t < 180 && t % 3 === 0) { puff(s.parts, 20, 41, -1); puff(s.parts, 60, 41, -1); }
+  const up = actS.ground ? 0 : actS.vy < 0 ? -6 : -3;
+  put(c, heroSprite(actS, false), 'hero', 12, 26 + up, opts.flip); put(c, heroSprite(actB, true), 'hero', 52, 10 + up, opts.flip);
+  return label;
+}, frames('h_', ['jump', 'fall', 'land', 'skid'], 'hero').concat(frames('H_', ['jump', 'fall', 'land', 'skid'], 'hero')));
+
+/* fogo */
+const fireH = heroMock({ power: 2 }); let shots = [];
+card('Herói de fogo arremessando', 'O braço estica por 10 ticks; a bola de fogo gira, quica e estoura numa nuvem.', 96, 48, (c, s) => {
+  if (tick % 60 === 0) { fireH.throwT = 10; shots.push({ x: 26, y: 24, vx: 1.6, vy: 0, t: 0 }); }
+  if (fireH.throwT > 0) fireH.throwT--;
+  for (const f of shots) {
+    f.t++; f.x += f.vx; f.vy += 0.3; f.y += f.vy; if (f.y > 34) { f.y = 34; f.vy = -2.6; }
+    if (f.x > 84) { f.dead = true; s.parts.push({ k: 'ring', x: f.x + 4, y: f.y + 4, vx: 0, vy: 0, t: 0, life: 12, col: '#f88818' }); }
+  }
+  shots = shots.filter(f => !f.dead);
+  put(c, heroSprite(fireH, true), 'heroF', 8, 10);
+  for (const f of shots) put(c, fireSprite(f), 'fire', f.x, f.y);
+  return fireH.throwT > 0 ? 'arremesso' : 'parado';
+}, [['H_stand_t', 'heroF'], ['H_w1_t', 'heroF'], ['H_jump_t', 'heroF'], ['fire0', 'fire'], ['fire1', 'fire'], ['fire2', 'fire'], ['fire3', 'fire']]);
+
+/* estrela */
+const starH = heroMock({ power: 1, star: 600 });
+card('Invencível (estrela)', 'A paleta troca a cada 3 ticks (a cada 6 quando está acabando) e solta brilhos.', 48, 48, (c, s) => {
+  starH.star = 600 - (tick % 600); walkTick(starH, true);
+  if (tick % 4 === 0) twinkle(s.parts, 12 + Math.random() * 24, 10 + Math.random() * 32, ['#fcfcfc', '#fcd848', '#f8a0e0'][(tick >> 2) % 3]);
+  const pal = heroPal(starH, tick); put(c, heroSprite(starH, true), pal, 16, 10, opts.flip);
+  return pal + (starH.star < 120 ? ' (acabando)' : '');
+}, ['heroS1', 'heroS2', 'heroS3', 'hero'].map(p => ['H_stand', p]));
+
+/* crescer e encolher */
+const still = heroMock();
+card('Crescer e encolher', 'Alterna pequeno, meio-termo esticado e grande (ao contrário quando leva dano).', 48, 48, c => {
+  const t = tick % 120;
+  let hh = 16, label = 'pequeno';
+  if (t < 45) { hh = GROW_SEQ[Math.floor(t / 5)]; label = 'crescendo'; }
+  else if (t < 60) { hh = 32; label = 'grande'; }
+  else if (t < 105) { hh = 48 - GROW_SEQ[Math.floor((t - 60) / 5)]; label = 'encolhendo'; }
+  c.drawImage(spr(heroSprite(still, hh > 16), 'hero', opts.flip), 16, 42 - hh, 16, hh);
+  return label + ' (' + hh + ' px)';
+}, [['h_stand', 'hero'], ['H_stand', 'hero']]);
+
+/* morte e mastro */
+const dieH = heroMock({ state: 'die' }), poleH = heroMock({ state: 'flag' });
+card('Susto e escalada no mastro', 'Ao morrer ele vira de frente agitando os braços; no mastro as mãos se alternam.', 80, 48, c => {
+  dieH.t = tick; poleH.anim = tick * 0.15;
+  put(c, heroSprite(dieH, false), 'hero', 8, 26 - Math.sin((tick % 60) / 60 * Math.PI) * 8);
+  c.fillStyle = '#80d010'; c.fillRect(65, 0, 2, 42);
+  put(c, heroSprite(poleH, false), 'hero', 53, 4 + (tick % 60) / 3);
+  return heroPose(dieH) + ' / ' + heroPose(poleH);
+}, frames('h_', ['die1', 'die2', 'climb1', 'climb2'], 'hero').concat(frames('H_', ['climb1', 'climb2'], 'hero')));
+
+/* gosma */
+const blob = { type: 'blob', state: 'walk', anim: 0, seed: 0, dir: -1, x: 60, t: 0 };
+card('Gosma andando e pisada', 'Estica e achata a cada passo e pisca. Pisada, vira uma poça e espirra gotas.', 96, 40, (c, s) => {
+  if (blob.state === 'walk') {
+    blob.anim++; blob.x += blob.dir * 0.5; if (blob.x < 6 || blob.x > 74) blob.dir *= -1;
+    if (tick % 200 === 199) {
+      blob.state = 'squish'; blob.t = 40; s.parts.push({ k: 'burst', x: blob.x + 8, y: 18, vx: 0, vy: 0, t: 0, life: 10 });
+      for (let i = 0; i < 8; i++) { const a = Math.PI + Math.random() * Math.PI; s.parts.push({ k: 'goo', x: blob.x + 8, y: 30, vx: Math.cos(a) * 1.2, vy: Math.sin(a) * 2, g: 0.2, t: 0, life: 26, col: i % 2 ? '#a048d8' : '#d8a0f8' }); }
+    }
+  } else if (--blob.t <= 0) blob.state = 'walk';
+  const f = enemySprite(blob, tick, 0); put(c, f.id, f.pal, blob.x, 18, f.flip, f.vflip); return f.id;
+}, [['blob_n', 'blob'], ['blob_sq', 'blob'], ['blob_st', 'blob'], ['blob_n_b', 'blob'], ['blob_flat', 'blob']]);
+
+/* pangolim */
+const pw = { type: 'pango', state: 'walk', anim: 0, dir: -1, h: 24, x: 4 }, pb = { type: 'pango', state: 'shell', shellT: 0, x: 40 }, pr = { type: 'pango', state: 'shellmove', roll: 0, x: 72 };
+card('Pangolim: anda, vira bola, espia e rola', 'Pisado, ele se enrola numa bola que espia o herói; chutado, as escamas giram.', 96, 48, c => {
+  pw.anim++; pb.shellT++; pr.roll += 2.1;
+  const a = enemySprite(pw, tick, 0), b = enemySprite(pb, tick, 0), r = enemySprite(pr, tick, 0);
+  put(c, a.id, a.pal, pw.x, 18, a.flip); put(c, b.id, b.pal, pb.x, 26, b.flip); put(c, r.id, r.pal, pr.x, 26);
+  return a.id + ' / ' + b.id + ' / ' + r.id;
+}, [['pango_a', 'pango'], ['pango_b', 'pango'], ['pango_c', 'pango'], ['ball0', 'pango'], ['ball1', 'pango'], ['ball2', 'pango'], ['ball3', 'pango'], ['ball_peek', 'pango']]);
+
+/* itens */
+const ITEMS = [{ type: 'grow' }, { type: 'fire' }, { type: 'life' }, { type: 'star' }];
+card('Itens', 'Maçã (cresce) brilha, pimenta (fogo) tremula, coração (vida) pulsa e estrela troca de cor.', 96, 32, (c, s) => {
+  ITEMS.forEach((it, i) => { const f = itemSprite(it, tick); put(c, f.id, f.pal, 4 + i * 23, 10); });
+  if (tick % 50 === 0) twinkle(s.parts, 9, 16);
+  if (tick % 6 === 0) twinkle(s.parts, 73 + Math.random() * 16, 10 + Math.random() * 14, '#fcd848');
+  return 'maçã · pimenta · coração · estrela';
+}, [['apple', 'apple'], ['chili', 'chili0'], ['chili', 'chili2'], ['heart', 'heart'], ['heart2', 'heart'], ['star', 'star0'], ['star', 'star2']]);
+
+/* efeitos */
+const debr = { t: 0 };
+card('Efeitos', 'Moeda girando, pedaço de tijolo, bola de fogo, poeira, brilho, impacto e estouro.', 96, 32, (c, s) => {
+  put(c, coinSprite(tick), 'coin', 4, 8); debr.t = tick; put(c, debSprite(debr), 'deb', 20, 12); put(c, fireSprite({ t: tick, vx: 1 }), 'fire', 34, 12);
+  if (tick % 20 === 0) puff(s.parts, 52, 22);
+  if (tick % 12 === 0) twinkle(s.parts, 64, 16);
+  if (tick % 30 === 0) s.parts.push({ k: 'burst', x: 76, y: 16, vx: 0, vy: 0, t: 0, life: 10 });
+  if (tick % 30 === 15) s.parts.push({ k: 'ring', x: 88, y: 16, vx: 0, vy: 0, t: 0, life: 12, col: '#f88818' });
+  return coinSprite(tick);
+}, [['coin0', 'coin'], ['coin1', 'coin'], ['coin2', 'coin'], ['coin3', 'coin'], ['deb0', 'deb'], ['deb1', 'deb'], ['fire0', 'fire']]);
+
+/* ------------------------- montagem e loop ------------------------- */
+const grid = document.getElementById('grid');
+for (const s of cards) {
+  const el = document.createElement('section'); el.className = 'card';
+  el.innerHTML = '<h2></h2><p></p><div class="stage"><canvas></canvas></div><div class="tag"></div><div class="strip"></div>';
+  el.querySelector('h2').textContent = s.title; el.querySelector('p').textContent = s.note;
+  s.cv = el.querySelector('.stage canvas'); s.cv.width = s.w; s.cv.height = s.h; s.ctx = s.cv.getContext('2d'); s.tag = el.querySelector('.tag');
+  for (const [id, pal] of s.strip) {
+    const im = spr(id, pal), cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height;
+    cv.getContext('2d').drawImage(im, 0, 0); cv.style.width = im.width * 2 + 'px'; cv.title = id; el.querySelector('.strip').appendChild(cv);
+  }
+  grid.appendChild(el);
+}
+const resize = () => { for (const s of cards) s.cv.style.width = s.w * opts.zoom + 'px'; };
+function step() {
+  tick++;
+  for (const s of cards) {
+    s.parts = tickParts(s.parts); sky(s.ctx, s.w, s.h);
+    s.tag.textContent = s.draw(s.ctx, s);
+    for (const q of s.parts) drawPart(s.ctx, q, 0);
+  }
+}
+let last = performance.now(), acc = 0;
+function loop(now) {
+  acc += Math.min(100, now - last); last = now;
+  while (acc >= 1000 / 60) { acc -= 1000 / 60; if (!opts.paused) step(); }
+  requestAnimationFrame(loop);
+}
+document.getElementById('vx').oninput = e => { opts.vx = +e.target.value; document.getElementById('vxv').textContent = e.target.value; };
+document.getElementById('zoom').onchange = e => { opts.zoom = +e.target.value; resize(); };
+document.getElementById('flip').onchange = e => { opts.flip = e.target.checked; };
+document.getElementById('pause').onclick = e => { opts.paused = !opts.paused; e.target.textContent = opts.paused ? 'Continuar' : 'Pausar'; };
+resize(); step(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>
