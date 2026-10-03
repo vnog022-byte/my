@@ -101,8 +101,8 @@ const HS_ARM = {
   upR: ['..S', '.C.', 'C..'], upL: ['S..', '.C.', '..C'],
   side: ['SC', 'SC'], sideR: ['CS', 'CS'], grab: ['CS'], reach: ['.S', 'C.'], hi: ['S.', 'S.', 'C.', '.C'],
   /* desenhos prontos (ja com contorno), sem contorno automatico */
-  jumpR: ['..............KK', '.............KSS', '.............KSS', '..............KC', '..............KC',
-    '..............KC', '.............KKC', '.............CCC', '.............KKK'],
+  jumpR: ['..............KK', '.............KSS', '.............KSS', '.............KCC', '.............KCC',
+    '.............KCC', '.............KCC', '.............CCC', '.............KKK'],
   skidL: ['.KK..', 'KSS..', 'KSS..', '.KKCK', '..KKC', '...KK'],
   dieV: ['K..............K', 'SK............KS', 'SK............KS', 'KC............CK', 'KC............CK',
     '.KCK........KCK.', '.KC..........CK.', '..K..........K..'],
@@ -122,16 +122,20 @@ const hsFrame = ({ head = HH, hx = 2, hy = 0, tx = 0, leg, arms = [], torso = HS
   return g;
 };
 const ARMS_DN = [['dn', 3, 8], ['dn', 12, 8]];
-ROWS.h_stand = hsFrame({ leg: HS_LEG.stand, arms: ARMS_DN });
-ROWS.h_stand2 = hsFrame({ head: HH2, leg: HS_LEG.stand, arms: ARMS_DN });
+const HS_SPATCH = { 14: '...KNNNNKOOOK...' }; // K separa os dois tenis
+ROWS.h_stand = hsFrame({ leg: HS_LEG.stand, arms: ARMS_DN, patch: HS_SPATCH });
+ROWS.h_stand2 = hsFrame({ head: HH2, leg: HS_LEG.stand, arms: ARMS_DN, patch: HS_SPATCH });
 /* caminhada: no contato so a mao da frente aparece (a de tras fica atras do tronco); na passagem, uma mao */
 /* contato: entre as pernas fica um triangulo de ceu (linhas 11-12 pintadas a mao) */
 const HS_CPATCH = { 11: '....KQQQKPPPKK..', 12: '...KQQK..KPPK...' };
 const HS_CPATCH_B = { 11: swapLegs([HS_CPATCH[11]])[0], 12: swapLegs([HS_CPATCH[12]])[0] };
 ROWS.h_w1 = hsFrame({ hy: 1, leg: HS_LEG.cA, arms: [['fw', 12, 9]], patch: HS_CPATCH });
-ROWS.h_w2 = hsFrame({ leg: HS_LEG.pA, arms: [['dn', 12, 7]] });
+/* passagem: pe livre 2 px acima do chao, separado do pe de apoio (linhas 10-14 pintadas a mao) */
+const HS_PPATCH = { 10: '....KQQPPPK.....', 11: '...KQQKPPK......', 12: '..KNNKKPPK......', 13: '...KKKOOOK......', 14: '.....KOOOOK.....' };
+const HS_PPATCH_B = Object.fromEntries(Object.entries(HS_PPATCH).map(([y, r]) => [y, swapLegs([r])[0]]));
+ROWS.h_w2 = hsFrame({ leg: HS_LEG.pA, arms: [['dn', 12, 7]], patch: HS_PPATCH });
 ROWS.h_w3 = hsFrame({ hy: 1, leg: HS_LEG.cB, arms: [['fw', 12, 9]], patch: HS_CPATCH_B });
-ROWS.h_w4 = hsFrame({ leg: HS_LEG.pB, arms: [['dn', 12, 7]] });
+ROWS.h_w4 = hsFrame({ leg: HS_LEG.pB, arms: [['dn', 12, 7]], patch: HS_PPATCH_B });
 ROWS.h_jump = hsFrame({ leg: HS_LEG.jump, arms: [['bk', 2, 8], ['jumpR', 0, 0]] });
 ROWS.h_fall = hsFrame({ leg: HS_LEG.fall, arms: [['upL', 0, 5], ['upR', 13, 5]] });
 ROWS.h_skid = hsFrame({ hx: 4, tx: 2, leg: HS_LEG.skid, arms: [['skidL', 0, 4], ['dn', 14, 8]] });
