@@ -81,24 +81,24 @@ ROWS.pango_x = compose(16, 24, [[PG_TAIL, 10, 16], [PG_ARMOR],
   [['KAAK....', '.KAAK...', '..KAAK..', '...KAAK.', '....KAAK', '....SKKS'], 8, 18]]);
 
 /* bola: pangolim enrolado. Metade de cima com 2 fileiras de escamas em U fechadas (o mesmo motivo da
-   armadura, 1px de folga do contorno); a cauda envolve meia volta por baixo como uma faixa de borda clara,
-   com a ponta S e tampa K. Isso quebra a simetria e mostra o giro: rot90 = sentido horario = rolar para a
+   armadura, 1px de folga do contorno); a cauda envolve meia volta (de cima/esquerda ate a diagonal de baixo/direita) como
+   uma faixa de borda clara, com a ponta S e tampa K na diagonal inferior direita. Isso quebra a simetria e mostra o giro: rot90 = sentido horario = rolar para a
    direita. O brilho fixo do alto a esquerda e reaplicado em cada quadro. */
 const PG_BALL = [
   '.....KKKKKK.....',
   '...KKAAAAAAKK...',
   '..KAAAAAAAAAAK..',
-  '.KAKAAAKAAAKAAK.',
-  '.KAKAAAKAAAKAAK.',
-  'KAAAKKKAKKKAKAAK',
-  'KAAAAKAAAKAAAKAK',
-  'KAAAAKAAAKAAAKAK',
-  'KKKKAAKKKAKKKKKK',
-  'KSSKAAAAAAAAKASK',
-  'KSAKAAAAAAAAKASK',
-  '.KSAKAAAAAAKASK.',
-  '.KSKAKKKKKKAKSK.',
-  '..KSAAAAKAAASK..',
+  '.KAAAAKAAAKAAAK.',
+  '.KKKKAKAAAKAAAK.',
+  'KSAKAAAKKKAKKKAK',
+  'KSAKAAAAKAAAKAAK',
+  'KSAKAAAAKAAAKAAK',
+  'KSAKAKKKAKKKAKAK',
+  'KSAKAAAAAAAAAAAK',
+  'KSAAKAAAAAAKKAAK',
+  '.KSAAKAAAAKSSKK.',
+  '.KSKAAKKKKASSAK.',
+  '..KSAAKAAAASSK..',
   '...KKSSSSSSKK...',
   '.....KKKKKK.....',
 ];
