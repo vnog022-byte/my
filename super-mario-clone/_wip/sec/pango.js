@@ -23,7 +23,7 @@ const PG_DOME = [
   '.....#########..',
   '......#######...',
 ];
-const PG_TILE = ['AASA', 'AAAA', 'KAAA', 'AKKK'];
+const PG_TILE = ['ASAA', 'AAAA', 'KAAK', 'AKKA'];
 const pgScaled = (mask, tile, y0) => {
   const th = tile.length, at = (x, y) => (mask[y] || '')[x] === '#';
   return mask.map((r, y) => [...r].map((c, x) => {
