@@ -2,28 +2,26 @@
    Paleta NES de 3 cores: K=contorno A=escamas (caqui-oliva) S=pele/brilho. ---- */
 PAL.pango = { K: '#181008', A: '#8c7838', S: '#f8dca0' };
 
-/* armadura: mascara de corcunda inclinada (frente em diagonal descendo ate a cabeca baixa) preenchida
-   com escamas iguais em U: 4px de largura, arco K embaixo, 1px S no topo, fileiras deslocadas meia escama. */
+/* armadura: corpo baixo e comprido (tatu/pangolim), alongado para tras por cima da cauda, preenchido com
+   escamas em U fechadas (K nas laterais + arco embaixo), fileiras deslocadas meia escama, 1px de folga do
+   contorno e brilho de 2px so nas escamas de cima/esquerda. O quadro continua 16x24 (a hitbox do pango tem
+   24px e o sprite e desenhado a partir do topo dela), com o bicho na parte de baixo. */
 const PG_DOME = [
-  '................',
-  '................',
-  '.........####...',
-  '.......#######..',
+  '................', '................', '................', '................', '................',
+  '................', '................', '................',
+  '........#####...',
   '......#########.',
   '.....##########.',
-  '....###########.',
-  '...############.',
-  '..#############.',
-  '..#############.',
-  '..#############.',
-  '..#############.',
-  '...############.',
-  '...############.',
-  '....###########.',
-  '.....#########..',
-  '......#######...',
+  '....############',
+  '...#############',
+  '...#############',
+  '...#############',
+  '...#############',
+  '....############',
+  '.....##########.',
+  '.......######...',
 ];
-const PG_TILE = ['ASSA', 'AAAA', 'KAAK', 'AKKA'];
+const PG_TILE = ['ASSA', 'KAAK', 'KAAK', 'AKKA'];
 const pgScaled = (mask, tile, y0, lit) => {
   const th = tile.length, at = (x, y) => (mask[y] || '')[x] === '#';
   const inner = (x, y) => at(x - 1, y) && at(x + 1, y) && at(x, y - 1) && at(x, y + 1);
@@ -37,90 +35,87 @@ const pgScaled = (mask, tile, y0, lit) => {
     return ch;
   }).join(''));
 };
-const PG_ARMOR = pgScaled(PG_DOME, PG_TILE, 1, (x, y) => x + y < 17);
-/* cauda: base larga sob a armadura afinando em diagonal ate a borda direita, ponta no chao, 2 escamas */
+const PG_ARMOR = pgScaled(PG_DOME, PG_TILE, 0, (x, y) => x + y < 22);
+/* cauda: sai de baixo da traseira da armadura, 3px de miolo, desce em diagonal ate o chao */
 const PG_TAIL = [
-  'KKKKKK..',
-  'KAASAAK.',
-  '.KAAAAAK',
-  '..KKKAAK',
-  '...KSAAK',
-  '...KAAAK',
-  '....KAAK',
-  '....KSAK',
-  '.....KKK',
+  'KKKKKK',
+  'KAAASK',
+  '.KAAAK',
+  '.KKKAK',
+  '.KSAAK',
+  '..KAAK',
+  '...KKK',
 ];
-/* cabeca baixa: focinho conico (1->2->3px) com nariz K de 2px, queixo subindo em diagonal,
-   olho de 2px na vertical sob a palpebra pesada (as escamas do bone) */
+/* cabeca baixa na frente: focinho conico (1->2->3px) com nariz K, olho de 2px sob a palpebra de escamas */
 const PG_HEAD = ['....KKKK', '...KAAAK', '.KKSSKSK', 'KSSSSKSK', '.KSSSSSK', '..KKKKK.'];
-const PG_BELLY = ['..KSSK', '.KSSSK', '..KKKK'];
-/* pe: sola K chapada e 2 garras S de 1px para a frente, separadas */
-const pgFoot = c => ['SK' + c + c + 'K', 'K' + c + c + c + 'K', 'SKKKK'];
-const pgLeg = (c, foot, top) => {               // perna = coxa (linha de cima) + canela + pe; foot = coluna da garra
-  const rows = Array.from({ length: 6 }, () => '.'.repeat(16).split(''));
-  const put = (y, x, s) => [...s].forEach((ch, i) => { if (ch !== '.' && x + i >= 0 && x + i < 16) rows[y][x + i] = ch; });
-  put(0, top, 'K' + c + c + 'K');
-  put(1, Math.round((top + foot + 1) / 2), 'K' + c + c + 'K');
-  put(2, foot + 1, 'K' + c + c + 'K');
-  pgFoot(c).forEach((r, i) => put(3 + i, foot, r));
-  return rows.map(r => r.join(''));
+const PG_BELLY = ['.KSSSK', '..KKKK'];
+/* pernas: interior A com contorno K. A da frente tem garras S; a de tras tem garras e sola escuras (sombra).
+   Linhas: 0 = coxa (com linha K na juncao com a armadura), 1 = canela, 2..4 = pe. xs = coluna de cada linha. */
+const pgLegRows = (front, hip, shin, foot, lift) => {
+  const g = Array.from({ length: 5 }, () => Array(16).fill('.'));
+  const put = (y, x, t) => [...t].forEach((ch, i) => { if (ch !== '.' && x + i >= 0 && x + i < 16 && y >= 0) g[y][x + i] = ch; });
+  const c = front ? 'S' : 'K';
+  const footRows = [c + 'KAAK', 'KAAAK', c + 'KKKK'];
+  put(0, hip, 'KAAK');
+  if (lift) footRows.forEach((r, i) => put(1 + i, foot, r));
+  else { put(1, shin, 'KAAK'); footRows.forEach((r, i) => put(2 + i, foot, r)); }
+  return g.map(r => r.join(''));
 };
-const pgLift = (c, foot, top) => { const l = pgLeg(c, foot, top); return [l[0], l[3], l[4], l[5], '.'.repeat(16), '.'.repeat(16)]; };  // pe erguido 2px
-/* ciclo de 4 quadros, 4 ticks cada (2px a 0,5px/tick): o pe de apoio recua 2px por quadro (1 -> 3 -> 5).
-   contato: pernas em tesoura (frente estendida, tras empurrando); passagem: pernas juntas, corpo +1px.
-   perna da frente sempre A, perna de tras sempre escura (K); garras S. A cabeca balanca em fase oposta ao corpo. */
-const pgWalk = (body, head, legs) => compose(16, 24, [[PG_TAIL, 8, 15 + body], [PG_ARMOR, 0, body],
-  [PG_HEAD, 0, 12 + head], [PG_BELLY, 5, 15 + body], ...legs.map(l => [l, 0, 18])]);
-ROWS.pango_a = pgWalk(0, -1, [pgLeg('K', 5, 6), pgLeg('A', 1, 5)]);          // contato: perna da frente (A) adiante
-ROWS.pango_c = pgWalk(-1, 0, [pgLift('K', 6, 6), pgLeg('A', 3, 5)]);         // passagem: A apoiada, escura passando
-ROWS.pango_b = pgWalk(0, -1, [pgLeg('K', 1, 5), pgLeg('A', 5, 6)]);          // contato: perna de tras (escura) adiante
-ROWS.pango_d = pgWalk(-1, 0, [pgLeg('K', 3, 5), pgLift('A', 6, 6)]);         // passagem: escura apoiada, A passando
+/* ciclo de 4 quadros de 4 ticks (2px): o pe de apoio recua 2px por quadro (2 -> 4 -> 6).
+   contato: tesoura (frente estendida, tras empurrando) com ceu entre as canelas; passagem: corpo +1px. */
+const pgWalk = (body, head, back, front) => compose(16, 24, [[PG_TAIL, 10, 16 + body], [PG_ARMOR, 0, body],
+  [PG_HEAD, 0, 13 + head], [PG_BELLY, 4, 17 + body], [back, 0, 19], [front, 0, 19]]);
+const L = pgLegRows;
+ROWS.pango_a = pgWalk(0, 0, L(false, 7, 7, 6), L(true, 4, 3, 2));               // contato: frente adiante
+ROWS.pango_c = pgWalk(-1, -1, L(false, 7, 0, 7, true), L(true, 5, 4, 4));         // passagem: frente apoiada
+ROWS.pango_b = pgWalk(0, 0, L(true, 6, 7, 6), L(false, 5, 3, 2));                 // contato: tras adiante
+ROWS.pango_d = pgWalk(-1, -1, L(true, 6, 0, 7, true), L(false, 5, 4, 4));         // passagem: tras apoiada
 const PG_WALK = ['pango_a', 'pango_c', 'pango_b', 'pango_d'];
 
 /* derrubado (de pe aqui; o jogo vira de ponta-cabeca): olho em X 3x3 cercado de S, boca aberta,
    barriga grande e patas curtas de 3px dobradas junto a barriga, garras S */
-ROWS.pango_x = compose(16, 24, [[PG_TAIL, 8, 15], [PG_ARMOR],
-  [['..KSSSSK', '.KSSSSSK', '.KSSSSSK', '..KKKKK.'], 3, 16],
-  [['....KKKKK.', '..KKSSSSSK', '.KSSKSKSSK', 'KSSSSKSSSK', 'KSSSKSKSSK', '.KKKKSSSSK', '.KSSSKKKK.', '..KKK.....'], 0, 9],
-  [['.KKKK.', 'SKAAAK', '.KAAAK', 'SKKKK.'], 1, 18],
-  [['.KKKK.', 'KAAAKS', 'KAAAK.', '.KKKKS'], 9, 18]]);
+ROWS.pango_x = compose(16, 24, [[PG_TAIL, 10, 16], [PG_ARMOR],
+  [['....KKKK', '..KKSSSK', '.KSKSKSK', 'KSSSKSSK', 'KKSKSKSK', '.KKSSSSK', '..KKKKK.'], 0, 12],
+  [['..KSSSSK', '.KSSSSSK', '..KKKKK.'], 3, 17],
+  [['.KKKK.', 'SKAAAK', '.KAAAK', 'SKKKK.'], 1, 19],
+  [['.KKKK.', 'KAAAKS', 'KAAAK.', '.KKKKS'], 8, 19]]);
 
-/* bola: pangolim enrolado. Metade de cima com fileiras de escamas em U (o mesmo motivo da armadura,
-   1px de folga do contorno); a cauda escamada envolve meia volta por baixo como uma faixa, com a ponta
-   clara (S contra K) na borda. Isso quebra a simetria e mostra o giro: rot90 = sentido horario = rolar
-   para a direita. O brilho fixo do alto a esquerda e reaplicado em cada quadro. */
+/* bola: pangolim enrolado. Metade de cima com 2 fileiras de escamas em U fechadas (o mesmo motivo da
+   armadura, 1px de folga do contorno); a cauda envolve meia volta por baixo como uma faixa de borda clara,
+   com a ponta S e tampa K. Isso quebra a simetria e mostra o giro: rot90 = sentido horario = rolar para a
+   direita. O brilho fixo do alto a esquerda e reaplicado em cada quadro. */
 const PG_BALL = [
   '.....KKKKKK.....',
   '...KKAAAAAAKK...',
   '..KAAAAAAAAAAK..',
-  '.KAKKAAKKAAKKAK.',
-  '.KAAAKKAAKKAAAK.',
-  'KAAAAKKAAKKAAAAK',
-  'KAAKKAAKKAAKKAAK',
-  'KKKKAAAAAAAAKKKK',
-  'KSSKAAAKKAAAKASK',
-  'KSAKAKKAAKKAKASK',
-  'KSKKKAAAAAAKKKSK',
-  '.KSAAKAAAAKAASK.',
-  '.KSAAAKKKKAAASK.',
-  '..KSSAAAKASSSK..',
-  '...KKSSSKSSKK...',
+  '.KAKAAKAAKAAKAK.',
+  '.KAKAAKAAKAAKAK.',
+  'KAAAKKAKKAKKAAAK',
+  'KAKAAKAAKAAKAAAK',
+  'KAKAAKAAKAAKAAAK',
+  'KKKKKAKKAKKAKKKK',
+  'KSSKAAAAAAAAKASK',
+  'KSAKAAAAAAAAKASK',
+  '.KSAKAAAAAAKASK.',
+  '.KSKAKKKKKKAKSK.',
+  '..KSAAAAKAAASK..',
+  '...KKSSSSSSKK...',
   '.....KKKKKK.....',
 ];
 const PG_LIGHT = ['', '.....SSS', '...SSS', '..S', '..S', '.S'];
 const pgLit = rows => rows.map((r, y) => r.replace(/./g, (ch, x) => ch === 'A' && (PG_LIGHT[y] || '')[x] === 'S' ? 'S' : ch));
 let pgB = PG_BALL;
 for (let i = 0; i < 4; i++) { ROWS['ball' + i] = pgLit(pgB); pgB = rot90(pgB); }
-/* acordando: a cabeca sai por uma fresta na borda de baixo/esquerda, com o focinho (1->2->3px) e o nariz
-   fora do contorno e o olho meio fechado na borda; uma pata com garras fora do circulo, do outro lado.
-   A bola treme 1px: quadros de 17px; ball_peek tem a bola na coluna 0 e ball_peek2 na coluna 1, e
-   pangoSprite troca os dois quando o sprite vira, para a bola parada ficar sempre na coluna de ball0. */
+/* acordando: ball0 intacta; a cabeca (focinho 1->2->3px, nariz K, olho de 2px sob a palpebra) sai DE FATO
+   para fora do contorno a esquerda (linhas 8-12) e uma pata com garra S sai do lado de tras, com ceu entre
+   bola, focinho e pata. Quadros de 20px: ball_peek tem a bola na coluna 3, ball_peek2 na coluna 4 (tremor).
+   Virado (cabeca a direita) o espelho poe a bola de ball_peek2 na coluna 0, a mesma de ball0. Sem virar,
+   a bola fica 3px a direita: pangoSprite devolve ox: 3, e o drawEnemy precisa subtrair f.ox (ver resumo). */
 const PG_PEEK = ['...KKKK', '..KAAAK', '.KSSKSK', 'KSSSKSK', '.KKKKKK'];
-const PG_PAW = ['..KK', '.KAAK', 'KKKKS'];
-const PG_BALL_DIM = ROWS.ball0.map((r, y) => y < 8 ? r : r.replace(/S/g, 'A'));   // sem a faixa clara perto da cabeca e da pata
-const pgPeek = dx => compose(17, 16, [[PG_BALL_DIM, dx], [PG_PEEK, dx, 11], [PG_PAW, dx + 11, 13]]);
-ROWS.ball_peek = pgPeek(0);
-ROWS.ball_peek2 = pgPeek(1);
+const PG_PAW = ['.KKK', 'KAAK', 'KKKS'];
+const pgPeek = dx => compose(20, 16, [[ROWS.ball0, dx], [PG_PEEK, dx - 3, 8], [PG_PAW, dx + 12, 13]]);
+ROWS.ball_peek = pgPeek(3);
+ROWS.ball_peek2 = pgPeek(4);
 function pangoSprite(e, tick, px) {
   if (e.state === 'dead') return { id: e.h === 24 ? 'pango_x' : 'ball0', pal: 'pango', flip: e.dir > 0, vflip: true };
   if (e.state === 'walk') return { id: PG_WALK[Math.floor(e.anim / 4) % 4], pal: 'pango', flip: e.dir > 0 };
@@ -128,5 +123,5 @@ function pangoSprite(e, tick, px) {
   const t = e.shellT % 150, flip = px > e.x;
   if (t <= 105) return { id: 'ball0', pal: 'pango', flip };
   const shake = Math.floor(t / 3) % 2 === 1;                 // virado, ball_peek2 e o quadro "parado"
-  return { id: shake !== flip ? 'ball_peek2' : 'ball_peek', pal: 'pango', flip };
+  return { id: shake !== flip ? 'ball_peek2' : 'ball_peek', pal: 'pango', flip, ox: flip ? 0 : 3 };
 }

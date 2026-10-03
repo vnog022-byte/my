@@ -1287,7 +1287,7 @@ function drawTiles() {
 }
 function drawEnemy(e) {
   const f = enemySprite(e, G.tick, p.x);
-  drawSpr(f.id, f.pal, e.x - 1, e.y, f.flip, f.vflip);
+  drawSpr(f.id, f.pal, e.x - 1 - (f.ox || 0), e.y, f.flip, f.vflip);
 }
 function drawPlayer() {
   if (p.state === 'bonus') return;

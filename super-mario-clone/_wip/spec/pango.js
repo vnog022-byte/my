@@ -4,7 +4,7 @@ const SPEC_pgAll = ['pango_a', 'pango_c', 'pango_b', 'pango_d', 'pango_x', 'ball
 
 var SPEC = {
   title: 'Pango (16x24 andando, bola 16x16) — secao pango',
-  sizes: [['pango_a', 16, 24], ['pango_b', 16, 24], ['pango_c', 16, 24], ['pango_d', 16, 24], ['pango_x', 16, 24], ['ball0', 16, 16], ['ball1', 16, 16], ['ball2', 16, 16], ['ball3', 16, 16], ['ball_peek', 17, 16], ['ball_peek2', 17, 16]],
+  sizes: [['pango_a', 16, 24], ['pango_b', 16, 24], ['pango_c', 16, 24], ['pango_d', 16, 24], ['pango_x', 16, 24], ['ball0', 16, 16], ['ball1', 16, 16], ['ball2', 16, 16], ['ball3', 16, 16], ['ball_peek', 20, 16], ['ball_peek2', 20, 16]],
   grounded: ['pango_a', 'pango_c', 'pango_b', 'pango_d', 'ball0', 'ball1', 'ball2', 'ball3', 'ball_peek', 'ball_peek2'],
   groups: [
     { title: 'Andando: contato A, passagem, contato B, passagem; derrubado (10x)', scale: 10, items: [['pango_a', 'pango'], ['pango_c', 'pango'], ['pango_b', 'pango'], ['pango_d', 'pango'], ['pango_x', 'pango', false, true]] },
