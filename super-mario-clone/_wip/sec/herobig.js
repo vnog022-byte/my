@@ -92,10 +92,9 @@ ROWS.H_stand2 = HB_frame(HB_STAND, [], HB_AL.down, HB_AR.down, 0, { head: HH2 })
 ROWS.H_stand_t = HB_frame(HB_STAND, [], HB_AL.down, HB_AR.throw);
 ROWS.H_stand2_t = HB_frame(HB_STAND, [], HB_AL.down, HB_AR.throw, 0, { head: HH2 });
 /* pulo: joelho de perto encolhido a frente, perna de longe esticada para tras */
-const HB_JUMP_N = ['.......PPPP.....', '........PPPPP...', '.........PPPPP..', '...........PPP..', '...........PP...', '...........PP...',
-  '..........OOO...', '..........OOOOO.', '..........KKKKK.', '................', '................', '................', '................'];
-const HB_JUMP_F = ['......PPP.......', '......PPP.......', '.....PPP........', '.....PPP........', '....PPP.........', '....PP..........',
-  '...PP...........', '...PP...........', '..PP............', '.OOO............', '.KOOOO..........', '..KKKK..........', '................'];
+const HB_JUMP_N = ['.......PPPP.....', '........PPPPP...', '.........PPPPP..', '..........PPPP..', '..........PPP...', '..........PPP...',
+  '..........OOOO..', '..........OOOOO.', '..........KKKKK.', '................', '................', '................', '................'];
+const HB_JUMP_F = HB_LEG[4].concat(['................']);
 ROWS.H_jump = HB_frame(HB_JUMP_N, HB_JUMP_F, HB_dark(HB_AL.back2), HB_AR.up);
 ROWS.H_jump_t = HB_frame(HB_JUMP_N, HB_JUMP_F, HB_dark(HB_AL.back2), HB_AR.throw);
 ROWS.H_fall = HB_frame(HB_LEG[7], HB_LEG[5].concat(['................']).slice(-13), HB_dark(HB_AL.back1), HB_AR.up);
@@ -112,10 +111,11 @@ const HB_LAND = ['....QQQ..PPP....', '...QQQ....PPP...', '...QQ......PP...', '..
   '....QQ....PP....', '....QQ....PP....', '...NNN....OOO...', '...NNNN...OOOO..', '...KKKK...KKKK..'];
 ROWS.H_land = HB_frame(HB_LAND, [], HB_AL.down, HB_AR.down, 2);
 ROWS.H_land_t = HB_frame(HB_LAND, [], HB_AL.down, HB_AR.throw, 2);
-/* mastro (mastro nas colunas 12-13): maos alternam no mastro, joelho de perto abraca o mastro */
-const HB_CLIMB_N = ['.......PPPP.....', '........PPPPP...', '..........PPP...', '..........PP....', '..........OOOO..', '..........KKKK..',
-  '................', '................', '................', '................', '................', '................', '................'];
-const HB_CLIMB_F = ['......PPP.......', '......PPP.......', '......PPP.......', '......PP........', '......PP........', '......PP........',
-  '......PP........', '......PP........', '......OOO.......', '......OOOO......', '......KKKK......', '................', '................'];
-ROWS.H_climb1 = HB_frame(HB_CLIMB_N, HB_CLIMB_F, HB_dark(HB_AL.down), HB_AR.up);
-ROWS.H_climb2 = HB_frame(HB_CLIMB_N, HB_CLIMB_F, HB_AL.down, HB_AR.fwd1);
+/* mastro (o mastro fica nas colunas 12-13): maos alternam no mastro, joelho de perto abraca o mastro */
+HB_AR.grip = [['.KK..', 'KSSK.', 'KSTK.', 'KLLK.', 'KCCK.', 'KCCK.', 'CCK..'], 11, -2];
+const HB_CLIMB_N = ['.......PPPP.....', '........PPPPP...', '.........PPPPP..', '..........PPPP..', '..........PPP...', '..........PPP...',
+  '..........OOOO..', '..........OOOOO.', '..........KKKKK.', '................', '................', '................', '................'];
+const HB_CLIMB_F = ['......PPPP......', '......PPPP......', '......PPPP......', '.......PPP......', '.......PPP......', '.......PPP......',
+  '.......PPP......', '........PPP.....', '........PPP.....', '........OOOO....', '........OOOOO...', '........KKKKK...', '................'];
+ROWS.H_climb1 = HB_frame(HB_CLIMB_N, HB_CLIMB_F, HB_dark(HB_AL.down), HB_AR.grip);
+ROWS.H_climb2 = HB_frame(HB_CLIMB_N, HB_CLIMB_F, HB_dark(HB_AL.down), HB_AR.fwd1, 1);

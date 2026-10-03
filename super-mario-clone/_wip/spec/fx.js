@@ -11,7 +11,7 @@ const SPEC_goo = t => {
     const a = Math.PI + (i + 0.5) / 8 * Math.PI, vx = Math.cos(a) * (0.8 + (i % 3) * 0.3), vy0 = Math.sin(a) * (1.4 + (i % 2) * 0.8);
     let x = 13, y = 18, vy = vy0;
     for (let k = 0; k < t; k++) { x += vx; y += vy; vy += 0.2; }
-    out.push({ k: 'goo', x, y, t, life: 26, vx, vy, g: 0.2, col: i % 2 ? '#a048d8' : '#d8a0f8' });
+    out.push({ k: 'goo', x, y, t, life: 26, vx, vy, g: 0.2, gy: 21, col: i % 2 ? '#a048d8' : '#d8a0f8' });
   }
   return out;
 };
