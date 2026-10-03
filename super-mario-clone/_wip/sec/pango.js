@@ -82,24 +82,24 @@ ROWS.pango_x = compose(16, 24, [[PG_TAIL, 8, 15], [PG_ARMOR],
   [['SKSSK', '.KSSK', 'SKKK.'], 0, 21],
   [['KAAK', '.KAAK', '..KAAK', '...KAKS', '...KKK.', '....S..'], 9, 18]]);
 
-/* bola: pangolim enrolado. Contorno limpo, 1px de folga, anel externo de 4 escamas em U e anel interno
-   de 4 escamas deslocadas meia escama, nucleo com brilho. A ponta da cauda (S contra K, na borda) da a volta
+/* bola: pangolim enrolado. Contorno limpo, 1px de folga, anel externo de 8 escamas em U (arco K, 1px S)
+   e anel interno de 4 escamas deslocadas, nucleo com brilho. A ponta da cauda (S contra K, na borda) da a volta
    nos 4 quadros (rot90 = sentido horario = rolar para a direita); a luz do alto a esquerda e reaplicada. */
 const PG_BALL = [
   '.....KKKKKK.....',
   '...KKAAAAAAKK...',
   '..KAAKKAAKKAAK..',
-  '.KAKKSAKKASKKAK.',
-  '.KAKAAKKKKAAKAK.',
-  'KAKSAKAKKAKASKAK',
-  'KAKAKAAAAAAKAKAK',
-  'KAAKKKAASAAKKAAK',
-  'KAAKKAAAAAKKKAAK',
-  'KKKAKAAAAAAKAKAK',
-  'KSKSAKAKKAKASKAK',
-  '.KSKAAKKKKAAKAK.',
-  '.KSKKSAKKASKKAK.',
-  '..KSAKKAAKKAAK..',
+  '.KAAKSAKKASKAAK.',
+  '.KAKKAAAAAAKKAK.',
+  'KAKAAAAKKAAAAKAK',
+  'KAKSAAKAAKAASKAK',
+  'KAAKAKASAAKAKAAK',
+  'KAAKAKAAAAKAKAAK',
+  'KKKSAAKAAKAASKAK',
+  'KSKAAAAKKAAAAKAK',
+  '.KSKKAAAAAAKKAK.',
+  '.KSAKSAKKASKAAK.',
+  '..KSKKKAAKKAAK..',
   '...KKAAAAAAKK...',
   '.....KKKKKK.....',
 ];

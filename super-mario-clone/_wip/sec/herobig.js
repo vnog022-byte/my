@@ -97,7 +97,10 @@ const HB_frame = o => {
   parts.push({ rows: HB_TORSO, x: dx, y: 7 + dy, ol: true, y2: 16 + dy });
   parts.push({ rows: o.head || HH, x: 2 + dx + (o.hx || 0), y: dy });
   if (o.aN) parts.push(arm(o.aN, false));
-  return HB_paint(parts);
+  const g = HB_paint(parts), r = hy + 2;
+  // sem no KK na virilha: o canto do quadril some quando a perna logo ao lado ja tem contorno
+  if (g[r][4] === '.' && g[r][5] === 'K' && g[r][6] === 'K') g[r] = g[r].slice(0, 5) + '.' + g[r].slice(6);
+  return g;
 };
 const HERO_WALK_B = ['w1', 'w2', 'w3', 'w4', 'w5', 'w6'], HERO_STEP_B = 4;
 /* braco de perto oposto a perna de perto: [perto, longe] por fase */
@@ -152,6 +155,6 @@ ROWS.H_duck_t = HB_frame({ near: HB_DUCK_N, far: HB_DUCK_F, dy: 7, aN: 'thr', aF
 const HB_CLIMB_UP = ['........PP......', '.........PP.....', '..........PP....', '...........PP...', '...........PP...', '..........PP....', '..........PP....',
   '..........OOO...', '..........OOOO..', '................', '................', '................', '................'];
 const HB_CLIMB_DN = ['......PP........', '......PP........', '......PP........', '......PP........', '......PP........', '......PP........', '......PP........',
-  '.......PP.......', '........PP......', '........OOO.....', '........OOOO....', '................', '................'];
+  '......PP........', '......PP........', '......OOO.......', '......OOOO......', '................', '................'];
 ROWS.H_climb1 = HB_frame({ near: HB_CLIMB_UP, far: HB_CLIMB_DN, dx: -1, aN: ['grip', 0], aF: ['grip', 4] });
 ROWS.H_climb2 = HB_frame({ near: HB_CLIMB_DN, far: HB_CLIMB_UP, dx: -1, dy: 1, aN: ['grip', 3], aF: ['grip', -1] });
