@@ -1010,7 +1010,9 @@ function buildLevel() {
   HB(198, 12);
   enemies = [];
   [22, 40, 51, 53, 80, 82, 97, 99, 114, 116, 124, 126, 128, 130, 174, 176].forEach(x => enemies.push(mkEnemy('blob', x)));
-  enemies.push(mkEnemy('pango', 107));
+  /* pangos no chao, longe de canos, buracos e escadas: entre os canos (34), antes do 1o buraco (62),
+     depois dele (75), dupla no meio (104/107), no vale entre as escadas (145), antes do cano final (160, 167) */
+  [34, 62, 75, 104, 107, 145, 160, 167].forEach(x => enemies.push(mkEnemy('pango', x)));
   items = []; coinPops = []; debris = []; bumps = []; fireballs = []; popups = []; parts = []; camX = 0;
   G.flagY = 52;
 }
