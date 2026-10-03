@@ -114,6 +114,7 @@ const hsFrame = ({ head = HH, hx = 2, hy = 0, tx = 0, leg, arms = [], torso = HS
     [torso, tx, 7 + hy],
     [head, hx, hy],
     ...arms.map(([a, x, y]) => [HS_ARM[a], x, y, HS_ARM[a][0].length < 16]),
+    ...arms.map(([a, x, y]) => [HS_ARM[a], x, y]), // repinta as mangas por cima do contorno do outro braco
   ]);
 };
 const ARMS_DN = [['dn', 3, 8], ['dn', 12, 8]];
