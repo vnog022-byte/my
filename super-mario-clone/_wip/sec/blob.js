@@ -14,9 +14,9 @@ const blobMask = (on, extra) => {
    em x8-10, boca em x4-7 (tudo 1-2 px a frente do centro x7,5); a = linha de cima dos olhos; hl = brilho
    molhado na curva da frente, separado do olho por 1 px de B */
 const BLOB_SHAPE = {
-  c: { lx: 0, rx: 15, top: 3, ins: [3, 2, 1, 1, 1, 0, 0, 0, 0, 1], a: 4, hl: [[2, 5], [2, 6]] },
-  m: { lx: 1, rx: 14, top: 2, ins: [3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1], a: 4, hl: [[2, 4], [2, 5]] },
-  p: { lx: 1, rx: 14, top: 1, ins: [3, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1], a: 3, hl: [[2, 6], [2, 7]] } };
+  c: { lx: 0, rx: 15, top: 3, ins: [3, 2, 1, 1, 1, 0, 0, 0, 0, 1], a: 4, fx: 4 },
+  m: { lx: 1, rx: 14, top: 2, ins: [3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1], a: 4, fx: 3 },
+  p: { lx: 1, rx: 14, top: 1, ins: [3, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1], a: 3, fx: 4 } };
 const BLOB_CYCLE = ['c', 'm', 'p', 'm', 'c', 'm', 'p', 'm'];
 const blobBody = (i, ko) => {
   const s = BLOB_SHAPE[BLOB_CYCLE[i % 8]], prev = BLOB_SHAPE[BLOB_CYCLE[(i + 7) % 8]];
@@ -33,15 +33,13 @@ const blobBody = (i, ko) => {
    pupila de 2 px de altura encostada no canto de dentro. Boca aberta de 2 linhas com lingua.
    Piscar = traco diagonal bravo. */
 const BLOB_EYES = {
-  open: [['LK.', 'LLK', 'LKK', 'LLL'], ['.KL', 'KLL', 'KKL', 'LLL']],
+  open: [['LK.', 'LLK', 'KLL', 'KLL'], ['.KL', 'KLL', 'LLL', 'KKL']],
   blink: [['...', 'K..', '.KK', '...'], ['...', '..K', 'KK.', '...']],
-  ko: [['K..K', '.KK.', '.KK.', 'K..K'], ['K..K', '.KK.', '.KK.', 'K..K']] };
+  ko: [['K..K', '.KK.', 'K..K'], ['K..K', '.KK.', 'K..K']] };
 const blobFace = (s, kind) => {
-  const E = BLOB_EYES[kind], parts = [];
-  if (kind === 'ko') return [[E[0], 3, s.a], [E[1], 9, s.a], [['KKKK', 'KLLK'], 6, s.a + 5]];
-  for (const [x, y] of s.hl) parts.push([['L'], x, y]);
-  parts.push([E[0], 4, s.a], [E[1], 8, s.a], [['KKKK', 'KLLK'], 4, s.a + 5]);
-  return parts;
+  const E = BLOB_EYES[kind];
+  if (kind === 'ko') return [[E[0], 3, s.a + 1], [E[1], 9, s.a + 1], [['KKKK', 'KLLK'], 6, s.a + 5]];
+  return [[['L', 'L'], s.fx + 8, s.a], [E[0], s.fx, s.a], [E[1], s.fx + 4, s.a], [['KKKK', 'KLLK'], s.fx, s.a + 5]];
 };
 const BLOB_NEAR = ['.KKK.', 'KLLLK', 'KLLLK', '.KKK.'], BLOB_FAR = ['.KKK.', 'KBBBK', 'KBBBK', '.KKK.'];
 /* pe: apoiado nos quadros 0-4 (2,4,6,8,10 = recua 2 px por quadro), volta erguido 1 px nos quadros 5-7 (8,6,4: escondido atras do pe apoiado na passagem) */
@@ -58,7 +56,7 @@ ROWS.blob_n_b = ROWS.blob_w0_b; ROWS.blob_sq_b = ROWS.blob_w2_b; ROWS.blob_st_b 
    (um traco cada, 1 px para dentro do contorno) e a lingua escorrendo para fora pela base */
 ROWS.blob_flat = compose(16, 16, [
   [blobMask((x, y) => (y === 11 && x >= 3 && x <= 12) || ((y === 12 || y === 13) && x >= 2 && x <= 13) || (y === 14 && x >= 1 && x <= 14) || y === 15)],
-  [['KK..KK'], 5, 12], [['KK'], 7, 14], [['LL'], 7, 15], [['L'], 3, 13]]);
+  [['LL'], 7, 12], [['KK....KK'], 4, 13], [['LK'], 7, 14]]);
 /* derrubada (casco/bloco/fogo): olhos em X cheio, boca aberta, pes juntos na base — virada com vflip */
 ROWS.blob_ko = compose(16, 16, [[BLOB_FAR, 8, 12], [BLOB_NEAR, 3, 12], [blobBody(1, true)], ...blobFace(BLOB_SHAPE.m, 'ko')]);
 PAL.blob = { K: '#000000', B: '#8000f0', L: '#fcc4fc' };
