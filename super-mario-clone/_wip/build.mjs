@@ -22,10 +22,14 @@ const a0 = idx.indexOf('/* ART-BEGIN */'), a1 = idx.indexOf('/* ART-END */') + '
 if (a0 < 0 || a1 < 20) throw new Error('marcadores ART-BEGIN/ART-END nao encontrados');
 let art = idx.slice(a0, a1);
 const secFile = path.join(wip, 'sec', item + '.js');
-if (fs.existsSync(secFile)) {
-  const s0 = art.indexOf(`/* SEC:${item} */`), s1 = art.indexOf(`/* END:${item} */`);
-  if (s0 < 0 || s1 < 0) throw new Error('marcadores da secao ' + item + ' nao encontrados');
-  art = art.slice(0, s0) + `/* SEC:${item} */\n` + rd(secFile).trim() + '\n' + art.slice(s1);
+// herobig usa a cabeca e a paleta da secao hero: usa tambem a copia de trabalho dela
+const DEPS = { herobig: ['hero'] };
+for (const s of [...(DEPS[item] || []), item]) {
+  const f = path.join(wip, 'sec', s + '.js');
+  if (!fs.existsSync(f)) continue;
+  const s0 = art.indexOf(`/* SEC:${s} */`), s1 = art.indexOf(`/* END:${s} */`);
+  if (s0 < 0 || s1 < 0) throw new Error('marcadores da secao ' + s + ' nao encontrados');
+  art = art.slice(0, s0) + `/* SEC:${s} */\n` + rd(f).trim() + '\n' + art.slice(s1);
 }
 const onerr = "<script>window.__errs=[];window.onerror=function(m,s,l,c){window.__errs.push(m+' (linha '+l+':'+c+')');};</script>";
 

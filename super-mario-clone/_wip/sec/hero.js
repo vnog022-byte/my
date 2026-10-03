@@ -79,12 +79,12 @@ const HS_LEG = {
     '....QQQ..PPP....',
     '...NNN....OOO...',
     '...NNNN...OOOO..'],
-  climb1: [10,
-    '....QQQPPPP.....',
-    '.....QQ...PP....',
-    '......QQ..OOO...',
-    '.......NNN......',
-    '.......NNNN.....'],
+  climb1: [10, // joelho de perto alto com o pe no mastro, perna de longe enganchada embaixo
+    '....QQPPPPP.....',
+    '....QQ....PP....',
+    '....QQ....OOO...',
+    '.....QQ.........',
+    '.....NNNN.......'],
   die: [10,
     '.....QQQPPP.....',
     '.....QQ..PP.....',
@@ -105,7 +105,7 @@ const hsFrame = ({ head = HH, hx = 2, hy = 0, tx = 0, leg, arms = [], torso = HS
   const [y0, ...rows] = leg;
   return HS_paint([
     [hsKeep(rows, 'QN'), 0, y0, true],
-    [hsKeep(rows, 'PO'), 0, y0, true],
+    [hsKeep(rows, 'PO'), 0, y0, 's'],
     [torso, tx, 7 + hy],
     [head, hx, hy],
     ...arms.map(([a, x, y]) => [HS_ARM[a], x, y, 's']),
