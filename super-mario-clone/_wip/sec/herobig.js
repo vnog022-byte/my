@@ -38,10 +38,10 @@ const HB_ARM = {
   f2: ['.......CC.......', '........CC......', '.........CC.....', '..........CC....', '..........LL....', '...........SS...', '...........SS...'],
   thr: ['.......CC.......', '.......CCCCLSS..', '.......CCCCLSS..'],
   // aberto para tras, quase na horizontal (derrapagem)
-  bk: ['......CC........', '....CCC.........', '..LCC...........', 'SSL.............', 'SS..............'],
+  bk: ['.......CC.......', '.....CCC........', '....LL..........', '...SS...........', '...SS...........'],
   // pulo: punho (S) e punho da manga (L) acima da orelha, longe da cabeca (comeca na linha 0)
-  up: ['.............SS.', '.............SS.', '.............LL.', '.............CC.', '............CC..', '...........CC...', '..........CC....',
-    '.........CC.....', '........CC......'],
+  up: ['.............SS.', '.............SS.', '.............LL.', '.............CC.', '.............CC.', '............CC..', '...........CC...',
+    '.........CCC....', '.......CCC......'],
   // queda / derrapagem: braco aberto para cima e para frente (comeca na linha 3)
   upF: ['............SS..', '............SS..', '............LL..', '...........CC...', '..........CC....', '.........CC.....'],
   // mastro: braco reto ate o mastro (mao em x=13-14 antes do deslocamento de -1)
@@ -121,14 +121,14 @@ ROWS.H_jump_t = HB_frame({ near: HB_JUMP_N, far: HB_JUMP_F, dx: -1, hx: -1, aN: 
 /* queda: braco da frente aberto para cima, o de tras inteiro atras do corpo; pernas bem abertas para baixo */
 const HB_FALL_N = HB_leg([[20, 9], [22, 10], [25, 11], [27, 12]], [[28, 12, 14], [29, 13, 14]]);
 const HB_FALL_F = HB_leg([[20, 7], [22, 6], [24, 5], [26, 4], [27, 3]], [[28, 2, 4], [29, 2, 5]]);
-ROWS.H_fall = HB_frame({ near: HB_FALL_N, far: HB_FALL_F, hx: -1, aN: 'upF', aF: 'b2' });
+ROWS.H_fall = HB_frame({ near: HB_FALL_N, far: HB_FALL_F, hx: -1, aN: ['upF', 0, 2], aF: 'b2' });
 ROWS.H_fall_t = HB_frame({ near: HB_FALL_N, far: HB_FALL_F, hx: -1, aN: 'thr', aF: 'b2' });
 /* derrapagem: tronco e cabeca 2 px para tras, perna da frente esticada e fincada (ponta para cima),
    a de tras dobrada embaixo do corpo, bracos abertos (o da frente para cima) */
 const HB_SKID_N = HB_leg([[19, 8], [21, 9], [24, 10], [28, 11]], [[29, 11, 14], [30, 11, 13]]);
 const HB_SKID_F = HB_leg([[20, 6], [22, 5], [28, 4]], [[29, 4, 6], [30, 4, 7]]);
-ROWS.H_skid = HB_frame({ near: HB_SKID_N, far: HB_SKID_F, dx: -2, aN: 'upF', aF: 'bk' });
-ROWS.H_skid_t = HB_frame({ near: HB_SKID_N, far: HB_SKID_F, dx: -2, aN: ['thr', 1], aF: 'bk' });
+ROWS.H_skid = HB_frame({ near: HB_SKID_N, far: HB_SKID_F, dx: -2, aN: 'bk', aF: ['upF', 0, 3] });
+ROWS.H_skid_t = HB_frame({ near: HB_SKID_N, far: HB_SKID_F, dx: -2, aN: ['thr', 1, 1] });
 /* aterrissagem: corpo 3 px abaixo, joelhos 3 px para fora, tenis separados, bracos abrindo */
 const HB_LAND_N = HB_leg([[22, 9], [23, 10], [24, 11], [26, 12], [28, 11]], [[29, 11, 13], [30, 11, 14]]);
 const HB_LAND_F = HB_leg([[22, 6], [23, 5], [24, 4], [26, 3], [28, 3]], [[29, 3, 5], [30, 3, 6]]);
