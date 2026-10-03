@@ -4,25 +4,25 @@ PAL.pango = { K: '#3a1a08', A: '#c8701c', S: '#fcc890' };
 const PG_ARMOR = [
   '................',
   '........KKKK....',
-  '......KKKAAAKK..',
-  '.....KAASSAAASK.',
-  '....KAAAKAAAAKAK',
-  '....KAAKAKAAKAKK',
-  '...KAKKAAAKKAAAK',
-  '...KAASSAAASSAAK',
-  '...KAAKAAAAKAAAK',
-  '...KAKAKAAKAKAAK',
-  '...KKAAAKKAAAKKK',
-  '...KSSAAASSAAASK',
-  '....KAAAAKAAAAKK',
-  '....KKAAKAKAAKAK',
-  '.....KKKAAAKKAAK',
-  '.....KASSAAASSAK',
-  '.....KAKAAAAKAAK',
-  '......KAKAAKAKK.',
+  '......KKSSAAKK..',
+  '.....KSSAAAAAAK.',
+  '....KSAAAKAAAAAK',
+  '....KAAAKAKAAAKK',
+  '...KAKKKAAAKKKAK',
+  '...KAAASSAAAASSK',
+  '...KAASAAAAASAAK',
+  '...KAAKAAAAAKAAK',
+  '...KAKAKAAAKAKAK',
+  '...KKAAAKKKAAAKK',
+  '....KSAAAASSAAAK',
+  '....KAAAASAAAAAK',
+  '.....KAAAKAAAAAK',
+  '.....KAAKAKAAAKK',
+  '.....KKKAAAKKKAK',
+  '......KSSAAAASK.',
   '.......KKKKKKK..',
 ];
-const PG_HEAD = ['...KKKK.', '.KKSSSSK', 'KSSSSKSK', 'KSSSSKSK', '.KKSSSSK', '...KKSK.'];
+const PG_HEAD = ['....KKK.', '..KKSSSK', '.KSSKSSK', 'KSSSKSSK', '.KKKSSSK', '....KSK.'];
 const PG_BELLY = ['...KSSK', '..KSSSK', '.KSKSSK', '..KKSSK', '...KSSK', '....KSK', '....KKK'];
 const PG_TAIL = ['KAAK', 'KSAK', '.KAK', '.KSK', '.KAK', '..KK'];
 const PG_LEGS = {
@@ -38,46 +38,31 @@ ROWS.pango_c = ROWS.pango_a;
    giram so o desenho das placas (rot90) e reaplicam a luz. */
 const PG_BALL = [
   '.....KKKKKK.....',
-  '...KKAAAKAAAKK..',
-  '..KAAAAAKAAAAK..',
-  '.KAAAAAAKAAAAAK.',
-  '.KAAAAKKKKAAAKK.',
-  'KAKAAKAAAAKAKAAK',
-  'KAAKKAAAAAAKAAAK',
-  'KAAAKAAAAAAKAAAK',
-  'KAAAKAAAAAAKAAAK',
-  'KAAAKAAAAAAKAAAK',
-  'KAAAAKAAAAKAKAAK',
-  '.KAAKAKKKKAAAKK.',
-  '.KAKAAAAAAAAAAK.',
+  '...KKAAAAAAKK...',
   '..KAAAAAAAAAAK..',
+  '.KAKAAAAKAAAAKK.',
+  '.KAAKAAKAKAAKAK.',
+  'KAAAAKKAAAKKAAAK',
+  'KAAAAASSAAAASSAK',
+  'KAAAAKSAAAKSAAAK',
+  'KKAAKAKAAKAKAAKK',
+  'KAKKAAAKKAAAKKAK',
+  'KAAASSAAAASSAAAK',
+  '.KAKSAAAKSAAAKK.',
+  '.KAAKAAKAKAAKAK.',
+  '..KAAKKAAAKKAK..',
   '...KKAAAAAAKK...',
   '.....KKKKKK.....',
 ];
-const PG_LIGHT = [
-  '................',
-  '.....SSS.S......',
-  '...SS...........',
-  '..S.............',
-  '..S.............',
-  '.S....SS........',
-  '.S...S..........',
-  '.S...S..........',
-  '.S..............',
-  '................',
-  '................',
-  '................',
-  '................',
-  '................',
-  '................',
-  '................',
-];
-const pgLit = rows => rows.map((r, y) => r.replace(/./g, (ch, x) => ch === 'A' && PG_LIGHT[y][x] === 'S' ? 'S' : ch));
+const PG_LIGHT = ['', '.....SSS', '...SS', '..S', '..S', '.S', '.S', '.S'];
+const pgLit = rows => rows.map((r, y) => r.replace(/./g, (ch, x) => ch === 'A' && (PG_LIGHT[y] || '')[x] === 'S' ? 'S' : ch));
 let pgB = PG_BALL;
 for (let i = 0; i < 4; i++) { ROWS['ball' + i] = pgLit(pgB); pgB = rot90(pgB); }
-ROWS.ball_peek = compose(16, 16, [[ROWS.ball0], [['.KK', 'KSSK', 'KSKS', '.KSK', '..K'], 0, 6], [['KSK', 'KK'], 3, 14], [['KSK', '.KK'], 10, 14]]);
-ROWS.ball_peek2 = compose(16, 16, [[ROWS.ball0], [['.KK', 'KSSK', 'KSKS', '.KSK', '..K'], 0, 7], [['KSK', '.KK'], 2, 14], [['KSK', 'KK'], 11, 14]]);
-ROWS.pango_x = recolor(ROWS.pango_a, {});
+const PG_PEEK = ['.KKKK.', 'KSSKSK', 'KSSSSK', '.KKKKK'];
+const PG_FEET = ['KSSK', 'KKKK'];
+ROWS.ball_peek = compose(16, 16, [[ROWS.ball0], [PG_PEEK, 0, 8], [PG_FEET, 2, 14], [PG_FEET, 10, 14]]);
+ROWS.ball_peek2 = compose(16, 16, [[ROWS.ball0], [PG_PEEK, 0, 7], [PG_FEET, 3, 14], [PG_FEET, 9, 14]]);
+ROWS.pango_x = compose(16, 24, [[ROWS.pango_a], [['S', 'S'], 4, 9], [['KK'], 3, 10]]);
 function pangoSprite(e, tick, px) {
   if (e.state === 'dead') return { id: e.h === 24 ? 'pango_x' : 'ball0', pal: 'pango', flip: e.dir > 0, vflip: true };
   if (e.state === 'walk') return { id: Math.floor(e.anim / 12) % 2 ? 'pango_b' : 'pango_a', pal: 'pango', flip: e.dir > 0 };
