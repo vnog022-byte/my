@@ -30,7 +30,7 @@ const HS_paint = parts => {
     const on = (x, y) => y >= 0 && y < h && x >= 0 && x < w && rows[y][x] !== '.';
     if (ol) for (let y = -1; y <= h; y++) for (let x = -1; x <= w; x++) {
       if (on(x, y) || !(on(x - 1, y) || on(x + 1, y) || on(x, y - 1) || on(x, y + 1))) continue;
-      const X = x + dx, Y = y + dy; if (X >= 0 && X < 16 && Y >= 0 && Y < 16) g[Y][X] = 'K';
+      const X = x + dx, Y = y + dy; if (X >= 0 && X < 16 && Y >= 0 && Y < 16 && (ol !== 's' || g[Y][X] === '.')) g[Y][X] = 'K';
     }
     rows.forEach((r, y) => { for (let x = 0; x < w; x++) { const X = x + dx, Y = y + dy; if (r[x] !== '.' && X >= 0 && X < 16 && Y >= 0 && Y < 16) g[Y][X] = r[x]; } });
   }
@@ -42,10 +42,10 @@ const hsKeep = (rows, set) => rows.map(r => r.replace(/./g, ch => set.includes(c
 const HS_LEG = {
   stand: [10,
     '.....QQQPPP.....',
-    '.....QQ..PP.....',
-    '.....QQ..PP.....',
-    '.....NNN.OOO....',
-    '.....NNNNOOOO...'],
+    '.....QQ.PP......',
+    '.....QQ.PP......',
+    '....NNN.OOO.....',
+    '....NNNNOOOO....'],
   cA: [11, // contato: perto na frente (quase vertical, degrau no joelho), longe atras na ponta do pe
     '......QQQPPP....',
     '.....QQ...PP....',
@@ -96,9 +96,9 @@ HS_LEG.cB = [HS_LEG.cA[0], ...swapLegs(HS_LEG.cA.slice(1))]; HS_LEG.pB = [HS_LEG
 HS_LEG.climb2 = [HS_LEG.climb1[0], ...swapLegs(HS_LEG.climb1.slice(1))];
 /* bracos de 2 px (manga C + mao S), com contorno: [desenho, x, y] */
 const HS_ARM = {
-  dn: ['C', 'S'], bk: ['.C', 'S.'], fw: ['C.', '.S'],
-  upR: ['..S', '.C.', 'C..'], upL: ['S..', '.C.', '..C'],
-  side: ['SC', 'SC'], up: ['S', 'C', 'C'], grab: ['CS'], reach: ['.S', 'C.'],
+  dn: ['M', 'S'], bk: ['.M', 'S.'], fw: ['M.', '.S'],
+  upR: ['...S', '..M.', '.M..'], upL: ['S...', '.M..', '..M.'],
+  side: ['SM', 'SM'], sideR: ['MS', 'MS'], up: ['S', 'M', 'M', 'M'], grab: ['MS'], reach: ['.S', 'M.'], hi: ['S.', '.M'],
 };
 /* monta um quadro: cabeca (hx, hy), tronco em ty (ou o mesmo de hy), pernas e bracos */
 const hsFrame = ({ head = HH, hx = 2, hy = 0, tx = 0, leg, arms = [], torso = HS_TORSO }) => {
@@ -106,29 +106,30 @@ const hsFrame = ({ head = HH, hx = 2, hy = 0, tx = 0, leg, arms = [], torso = HS
   return HS_paint([
     [hsKeep(rows, 'QN'), 0, y0, true],
     [hsKeep(rows, 'PO'), 0, y0, true],
-    ...arms.map(([a, x, y]) => [HS_ARM[a], x, y, true]),
     [torso, tx, 7 + hy],
     [head, hx, hy],
+    ...arms.map(([a, x, y]) => [HS_ARM[a], x, y, 's']),
   ]);
 };
-ROWS.h_stand = hsFrame({ leg: HS_LEG.stand, arms: [['dn', 2, 8], ['dn', 13, 8]] });
-ROWS.h_stand2 = hsFrame({ head: HH2, leg: HS_LEG.stand, arms: [['dn', 2, 8], ['dn', 13, 8]] });
-ROWS.h_w1 = hsFrame({ hy: 1, leg: HS_LEG.cA, arms: [['bk', 1, 9], ['fw', 13, 9]] });
-ROWS.h_w2 = hsFrame({ leg: HS_LEG.pA, arms: [['dn', 2, 8], ['dn', 13, 8]] });
-ROWS.h_w3 = hsFrame({ hy: 1, leg: HS_LEG.cB, arms: [['bk', 1, 9], ['fw', 13, 9]] });
-ROWS.h_w4 = hsFrame({ leg: HS_LEG.pB, arms: [['dn', 2, 8], ['dn', 13, 8]] });
-ROWS.h_jump = hsFrame({ leg: HS_LEG.jump, arms: [['bk', 1, 8], ['upR', 13, 5]] });
-ROWS.h_fall = hsFrame({ leg: HS_LEG.fall, arms: [['upL', 0, 5], ['upR', 13, 5]] });
-ROWS.h_skid = hsFrame({ hx: 4, tx: 2, leg: HS_LEG.skid, arms: [['reach', 3, 7], ['up', 15, 6]] });
-ROWS.h_land = hsFrame({ hy: 2, leg: HS_LEG.land, arms: [['side', 1, 9], ['side', 13, 9]].map(([a, x, y], i) => [a, x, y]) });
+const ARMS_DN = [['dn', 3, 8], ['dn', 12, 8]];
+ROWS.h_stand = hsFrame({ leg: HS_LEG.stand, arms: ARMS_DN });
+ROWS.h_stand2 = hsFrame({ head: HH2, leg: HS_LEG.stand, arms: ARMS_DN });
+ROWS.h_w1 = hsFrame({ hy: 1, leg: HS_LEG.cA, arms: [['bk', 2, 9], ['fw', 12, 9]] });
+ROWS.h_w2 = hsFrame({ leg: HS_LEG.pA, arms: ARMS_DN });
+ROWS.h_w3 = hsFrame({ hy: 1, leg: HS_LEG.cB, arms: [['bk', 2, 9], ['fw', 12, 9]] });
+ROWS.h_w4 = hsFrame({ leg: HS_LEG.pB, arms: ARMS_DN });
+ROWS.h_jump = hsFrame({ leg: HS_LEG.jump, arms: [['bk', 2, 8], ['upR', 12, 5]] });
+ROWS.h_fall = hsFrame({ leg: HS_LEG.fall, arms: [['upL', 0, 5], ['upR', 12, 5]] });
+ROWS.h_skid = hsFrame({ hx: 4, tx: 2, leg: HS_LEG.skid, arms: [['hi', 3, 7], ['dn', 14, 8]] });
+ROWS.h_land = hsFrame({ hy: 2, leg: HS_LEG.land, arms: [['bk', 2, 10], ['fw', 12, 10]] });
 ROWS.h_climb1 = hsFrame({ hx: 1, tx: -1, leg: HS_LEG.climb1, arms: [['reach', 12, 6], ['grab', 12, 9]] });
 ROWS.h_climb2 = hsFrame({ hx: 1, tx: -1, leg: HS_LEG.climb2, arms: [['grab', 12, 7], ['reach', 12, 9]] });
-ROWS.h_die1 = hsFrame({ head: HF, leg: HS_LEG.die, arms: [['side', 1, 8], ['side', 13, 8]] });
+ROWS.h_die1 = hsFrame({ head: HF, leg: HS_LEG.die, arms: [['side', 1, 8], ['sideR', 13, 8]] });
 ROWS.h_die2 = hsFrame({ head: HF, leg: HS_LEG.die, arms: [['up', 1, 4], ['up', 14, 4]] });
 for (const k in ROWS) if (k.startsWith('h_') && (ROWS[k].length !== 16 || ROWS[k].some(r => r.length !== 16))) throw new Error('tamanho errado ' + k);
 
 const HERO = { K: '#1c1828', C: '#20a08c', L: '#9cf0d8', M: '#127060', S: '#fcc8a0', T: '#fcc8a0', B: '#fcc8a0', E: '#1c1828',
-  P: '#b02c50', Q: '#701838', O: '#9cf0d8', N: '#20a08c' };
+  P: '#c0385c', Q: '#8c2450', O: '#9cf0d8', N: '#20a08c' };
 PAL.hero = HERO;
 PAL.heroF = { ...HERO, C: '#e8401c', L: '#fcd860', M: '#981c10', P: '#fcf4e0', Q: '#c8b48c', O: '#fcd860', N: '#e8401c' };
 PAL.heroS1 = { ...HERO, C: '#f8b800', L: '#fcf0a0', M: '#b07000', P: '#e84010', Q: '#a02008', O: '#fcf0a0', N: '#f8b800' };
